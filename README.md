@@ -43,6 +43,6 @@ refresh any substrate's `source/`.
 
 | Substrate | Repo | Status |
 |-----------|------|--------|
-| *(none yet)* | — | — |
+| `database` | [Logic-Solutions-GmbH/databases](https://github.com/Logic-Solutions-GmbH/databases) | `source/` pulled (empty repo — ready for artifacts) |
 
 Full architecture: `ai-engineering/LogicSolutionsGmbH/docs/superpowers/specs/2026-06-07-po-lab-architecture-design.md`
