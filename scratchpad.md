@@ -28,5 +28,5 @@ Personal analysis hub. `PO Workspace/` migrates here, project by project (slow).
   - `core-node/` — README + work dirs + `source/` @ `main` `5d91940`
   - Root `README.md` substrate index updated
 - [x] `pull-context` skill updated: scaffold on first pull, refresh-only on repeat
-- [ ] Commit substrate scaffolds to `po-lab` origin
+- [x] Commit substrate scaffolds to `po-lab` origin (`06ca283`)
 - [ ] First system substrate migration (e.g. journeys) — PO Workspace artifacts into po-lab
