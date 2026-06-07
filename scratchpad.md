@@ -20,5 +20,6 @@ Personal analysis hub. `PO Workspace/` migrates here, project by project (slow).
 
 - [x] First push of po-lab to origin (main)
 - [x] Database substrate wired: `Logic-Solutions-GmbH/databases` → `database/source/` (gitignored)
+- [x] Pushed database substrate docs to origin (`6413e26`)
 - [ ] Migrate `PO Workspace/Databases/` artifacts into `databases` repo (project by project)
 - [ ] First system substrate migration (e.g. journeys)
