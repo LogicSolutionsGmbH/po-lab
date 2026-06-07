@@ -38,7 +38,7 @@ From Carlos's on-screen walkthrough (2026-06-05).
 - An invoice involves **at least two companies** (tenant + recipient; possibly shipper + consignee).
   Adding entity/address columns inline would mean repeating company data many times.
 - Answer to "why not just two columns": **normalization.** Hence `Factura Extraida Participantes`
-  (see `02-resolve-entity-endpoint`).
+  (see `../HANDOFF-resolve-entity.md` §7).
 
 ## Backlinks
 <!-- brain-nightly:start -->

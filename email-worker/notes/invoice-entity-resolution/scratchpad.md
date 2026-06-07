@@ -25,17 +25,27 @@ Deep-dive notebook on AP-invoice vendor → directorio entity+address resolution
 - **Codex critique (2026-06-07):** `notes/07-codex-critique.md` — confirms shared-endpoint ownership
   requirement and argues worker should call the resolver in-line but not own resolver logic.
   Recommends deterministic gatekeeper + optional bounded LLM assist + migration plan to retire guess paths.
-- **Placement decided (2026-06-07):** `logic-core-node` owns `resolve-entity`; everyone else is a client.
-- **Build handoff (2026-06-07):** `PRD-resolve-entity-core-node.md` (v2.0) — directs a fresh session to
-  build a deterministic resolver module in core-node by porting the journeys kernel
-  (`resolve-directory.helper.ts`) and adding address selection, `resolution_status` (5-value), and a
-  durable learned-alias store. No LLM in resolution. Grounded in core-node conventions (Zod, `req.tenantDb`,
-  `db`-first services, `/Global/TenantEntities/` routes). Locks contract drift: `eori`, single
-  `resolution_status`. Supersedes v1.0 implementation approach (v1.0 kept for product requirements).
-- Updated `00-index.md` with research + critique + v2.0 handoff links.
+- Updated `00-index.md` with research + critique links.
+
+## Decided (2026-06-07, architecture session)
+- **Placement = in-process SDK, not an API.** core-node's JWT/session auth is the wrong boundary;
+  the worker already holds its own per-tenant pool and the resolver kernel is pure over an injected
+  `db`. Hosts import and call directly, inheriting their own connection. CLI/HTTP = optional thin
+  adapters over the same core, later.
+- **The Logic SDK is general-purpose** — home for many shared capabilities; entity-resolution is
+  capability #1. Tooling: **pnpm** (workspace, `workspace:*`, `--filter`), not npm.
+- **Next session = prototype**, two parallel tracks: (A) prove in the worker via existing
+  `getTenantInstance` pool; (B) build `logic-sdk` (core executor boundary + entity-resolution).
+  Prototype in po-lab first; extract to its own repo later.
+- Handoff written: `HANDOFF-logic-sdk-prototype.md` (start here). `HANDOFF-resolve-entity.md`
+  transport (§2.1/§4 core-node API) marked superseded; its logic/contract/ACs remain valid.
 
 ## Open
-- Reconcile remaining contract details with consumers when they integrate (out of scope of v2.0 handoff).
+- Prototype location: standalone `po-lab/logic-sdk/` (recommended) vs `email-worker/prototypes/`.
+- Package granularity (workspace-of-packages vs umbrella); executor boundary (raw `query()` vs
+  accept-Kysely adapter) — journeys kernel uses Kysely `sql` templates, decide early.
+- Which other shared capabilities are imminent (so `core` is shaped for them).
+- Reconcile contract drift before build (exact_match/matched, recommendations/hints, entity_address_id, eori).
 - Send PRD to Krishna (Carlos action).
 - UI surfacing for incomplete records (post-v1; Carlos + Ariana).
 - Confirm city/address availability at extraction for retry params.

@@ -62,8 +62,9 @@ fail loud and force a human to pick, never guess.
 - [[notes/05-implementation-research]] — **gap analysis: PRD vs journeys / email-worker / core-node source (2026-06-07)**
 - [[notes/06-opus-critique]] — **Opus critique: placement/reuse + agentic-vs-deterministic (2026-06-07, Codex review pending)**
 - [[notes/07-codex-critique]] — **Codex critique: shared endpoint ownership + deterministic gate (2026-06-07)**
-- [[PRD-resolve-entity]] — v1.0 product spec (original; agentic/worker approach)
-- [[PRD-resolve-entity-core-node]] — **v2.0 BUILD HANDOFF — deterministic resolver in `logic-core-node` (supersedes v1.0 implementation approach)**
+- [[PRD-resolve-entity]] — original implementation spec (agentic/worker-local; superseded)
+- [[HANDOFF-resolve-entity]] — resolution logic/contract/ACs (transport superseded → SDK)
+- [[HANDOFF-logic-sdk-prototype]] — **START HERE next session: in-process Logic SDK prototype (pnpm), entity-resolution = capability #1**
 
 ## Sources
 

@@ -1,7 +1,7 @@
 ---
 doc: build-handoff
 feature: resolve-entity
-supersedes: PRD-resolve-entity.md (v1.0)
+supersedes: 2026-06-06 agentic/worker-local approach (session origin in sources/)
 version: 2.0
 date: 2026-06-07
 status: ready-for-implementation
@@ -10,11 +10,17 @@ authors: Carlos Marquez (product), Opus + Codex (architecture critique)
 
 # Build Handoff — `resolve-entity` (shared directorio resolution)
 
-> **For a fresh implementation session.** This document is self-contained: it carries all
-> context, decisions, contracts, and steps needed to build the feature without access to the
-> originating chat. Where it differs from `PRD-resolve-entity.md` v1.0, **this document wins** —
-> the changes come from two architecture critiques (`notes/06-opus-critique.md`,
-> `notes/07-codex-critique.md`).
+> **Canonical build spec.** Self-contained handoff for a fresh implementation session — no other
+> PRD or handoff doc is required. Supersedes the 2026-06-06 agentic/worker-local approach from the
+> Krishna session (see `sources/` for origin context).
+>
+> **⚠️ TRANSPORT SUPERSEDED (2026-06-07):** §2.1 and §4 below specify a **core-node HTTP API** as
+> the resolution home. That transport decision is **superseded** by
+> `HANDOFF-logic-sdk-prototype.md`: resolution ships as an **in-process Logic SDK** that hosts
+> import and call directly (no core-node API, no per-tenant JWT). core-node's auth is a
+> browser-session/JWT model and is the wrong boundary for the worker, which already holds its own
+> per-tenant DB pool. **All resolution *logic/contract/ACs* in this doc remain valid** — only read
+> "endpoint / HTTP call" as "in-process SDK call". See the SDK handoff for the current shape.
 
 ---
 
@@ -114,7 +120,7 @@ Temporal activity that downstream workflows must wait on. "In-line" = in-line **
 shared endpoint, not in-line **logic**.
 
 ```
-email-worker (extract activity) --in-line HTTP--> core-node POST /v1/directory/resolve-entity
+email-worker (extract activity) --in-line HTTP--> core-node POST /Global/TenantEntities/resolve-entity/resolve
 journeys (Claim, provision)     --------------->  (same endpoint)
 future tools                    --------------->  (same endpoint)
                                                    |
@@ -155,12 +161,15 @@ Resolve all naming drift now (PRD `exact_match` vs engine `matched`, `recommenda
 ### 4.1 Request
 
 ```
-POST /v1/directory/resolve-entity
+POST /Global/TenantEntities/resolve-entity/resolve
 ```
+
+Tenant comes from middleware (`req.tenantDb` via JWT `cliente` → `TCExi_Clientes`) — **not** a
+request body field. Add `resolveEntity: '/Global/TenantEntities/resolve-entity'` to
+`src/config/routesconfig.ts`; controller `@Post('resolve')`.
 
 ```jsonc
 {
-  "tenant_id": 123,                 // required — processing office/tenant
   "signals": {
     "entity_name": "string|null",   // >=1 strong signal required (name|tax_id|eori)
     "tax_id": "string|null",
@@ -256,8 +265,10 @@ Every human resolution should make the next identical invoice auto-resolve — d
 
 ### 7.1 core-node (`logic-core-node`)
 
-1. `DirectoryModule` + `ResolveEntityService` (ported kernel + address selection + status).
-2. `POST /v1/directory/resolve-entity` controller with the section 4 contract + validation.
+1. `ResolveEntityModule` at `src/resolve-entity/` (flat: module, controller, service, validator,
+   specs) — follow `src/shipments/` / `src/users/` layout; register in `app.module.ts`.
+2. `POST /Global/TenantEntities/resolve-entity/resolve` with Zod validation (`ZodValidationPipe`);
+   service methods take `db: Kysely<DB>` as first arg (`req.tenantDb`).
 3. `directorio_resolved_alias` table + read/write paths.
 4. Auth/tenant guard consistent with existing core-node patterns.
 5. Metrics/logs per section 9.
@@ -368,13 +379,25 @@ latency. Without these, threshold tuning and quality claims are guesswork.
 
 ---
 
+## Appendix A — core-node conventions (must match)
+
+| Topic | Convention |
+|-------|-----------|
+| Routes | `/Global/TenantEntities/{feature}/{action}` — no `/v1`, no global prefix |
+| Validation | Zod in `*.validator.ts` + `ZodValidationPipe` |
+| DB | Kysely; `import { DB } from 'src/database/tenantdb'`; query `'TCSch_Directorio'` etc. |
+| Tenant | `req.tenantDb` from `TenantMiddleware` — not a body param |
+| Auth | Global middleware; `req.authData` for entity scoping via `getEntityIdsFromRequest` |
+| Response | `TransformResponseInterceptor` wraps as `{ statusCode, success, message, data }` |
+| Tests | Jest; mock `db`; `service.method(db, input)` |
+| New deps | `fuzzball`, `double-metaphone` (port from journeys kernel) |
+
 ## References
 
-- Original product spec: `PRD-resolve-entity.md` (v1.0) — superseded by this doc where they differ.
-- Critiques: `notes/06-opus-critique.md`, `notes/07-codex-critique.md`.
-- Gap research: `notes/05-implementation-research.md`.
-- Entity model: `notes/01-entity-model.md`.
-- Engine to port: `journeys/source/src/server-actions/api/directory/resolve-directory.helper.ts`.
+- Gap research: `notes/05-implementation-research.md`
+- Entity model: `notes/01-entity-model.md`
+- Ambiguity scenarios: `notes/03-ambiguity-scenarios.md`
+- Engine to port: `journeys/source/src/server-actions/api/directory/resolve-directory.helper.ts`
 - Guess paths to retire: `provision.lookup-directory.data.ts`,
-  `email-worker/.../store.attachment.classification.ts`.
-- Session source: `sources/2026-06-05-krishna-session.*`.
+  `email-worker/.../store.attachment.classification.ts`
+- Session source: `sources/2026-06-05-krishna-session.*`
