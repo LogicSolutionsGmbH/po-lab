@@ -22,4 +22,11 @@ Personal analysis hub. `PO Workspace/` migrates here, project by project (slow).
 - [x] Database substrate wired: `Logic-Solutions-GmbH/databases` → `database/source/` (gitignored)
 - [x] Pushed database substrate docs to origin (`6413e26`)
 - [ ] Migrate `PO Workspace/Databases/` artifacts into `databases` repo (project by project)
-- [ ] First system substrate migration (e.g. journeys)
+- [x] System substrates scaffolded (`pull-context` — full layout):
+  - `journeys/` — README + work dirs + `source/` @ `main` `25376b6`
+  - `email-worker/` — README + work dirs + `source/` @ `main` `1317df8`
+  - `core-node/` — README + work dirs + `source/` @ `main` `5d91940`
+  - Root `README.md` substrate index updated
+- [x] `pull-context` skill updated: scaffold on first pull, refresh-only on repeat
+- [ ] Commit substrate scaffolds to `po-lab` origin
+- [ ] First system substrate migration (e.g. journeys) — PO Workspace artifacts into po-lab

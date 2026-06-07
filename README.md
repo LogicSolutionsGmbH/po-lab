@@ -44,5 +44,8 @@ refresh any substrate's `source/`.
 | Substrate | Repo | Status |
 |-----------|------|--------|
 | `database` | [Logic-Solutions-GmbH/databases](https://github.com/Logic-Solutions-GmbH/databases) | `source/` pulled (empty repo — ready for artifacts) |
+| `journeys` | [Logic-Solutions-GmbH/logic-journeys](https://github.com/Logic-Solutions-GmbH/logic-journeys) | scaffolded; `source/` @ `main` `25376b6` |
+| `email-worker` | [Logic-Solutions-GmbH/logic-email-worker](https://github.com/Logic-Solutions-GmbH/logic-email-worker) | scaffolded; `source/` @ `main` `1317df8` |
+| `core-node` | [Logic-Solutions-GmbH/logic-core-node](https://github.com/Logic-Solutions-GmbH/logic-core-node) | scaffolded; `source/` @ `main` `5d91940` |
 
 Full architecture: `ai-engineering/LogicSolutionsGmbH/docs/superpowers/specs/2026-06-07-po-lab-architecture-design.md`
