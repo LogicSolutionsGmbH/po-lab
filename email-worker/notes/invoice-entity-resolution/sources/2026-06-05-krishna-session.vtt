@@ -1,0 +1,1052 @@
+WEBVTT
+
+00:00:03.093 --> 00:00:08.173
+<v Krishna Kapadia (Logic)>We know how we are this one, so we need to update this approach right first.</v>
+
+00:00:03.133 --> 00:00:06.013
+<v Carlos Marquez (Logic)>I wouldn't do, yeah, the hell, yeah.</v>
+
+00:00:08.413 --> 00:00:13.773
+<v Carlos Marquez (Logic)>Yeah, so I wouldn't, I wouldn't. OK, tell me to finish, finish, finish, yeah.</v>
+
+00:00:09.453 --> 00:00:10.893
+<v Krishna Kapadia (Logic)>So, instead of...</v>
+
+00:00:13.853 --> 00:00:27.533
+<v Krishna Kapadia (Logic)>Yeah, so instead of doing this, what you suggest, instead of querying like this, we need to use resolve endpoint, resolve entity, and in resolve entity, we have the parameter like...</v>
+
+00:00:21.853 --> 00:00:23.373
+<v Carlos Marquez (Logic)>Mhm, mhm.</v>
+
+00:00:30.093 --> 00:00:48.373
+<v Krishna Kapadia (Logic)>Like entity name, text ID, ERI, country code, city, and address line one. So while we are doing this, what I'm thinking, instead of creating a new activity, we can just, instead of doing this, we can call the result entity endpoint here and make this agent tick.</v>
+
+00:00:35.413 --> 00:00:35.893
+<v Carlos Marquez (Logic)>Mhm.</v>
+
+00:00:46.773 --> 00:00:47.253
+<v Carlos Marquez (Logic)>Mhm.</v>
+
+00:00:49.853 --> 00:00:50.173
+<v Carlos Marquez (Logic)>Yeah.</v>
+
+00:00:50.093 --> 00:00:59.773
+<v Krishna Kapadia (Logic)>So, in this why, because a lot of activity means a lot of workflow dependent on this record means this entry.</v>
+
+00:00:59.213 --> 00:00:59.613
+<v Carlos Marquez (Logic)>Right.</v>
+
+00:01:00.573 --> 00:01:01.053
+<v Carlos Marquez (Logic)>Mhm.</v>
+
+00:01:00.973 --> 00:01:20.773
+<v Krishna Kapadia (Logic)>So we need to check if we add one extra activity, then we need to wait for the activity to run this. And then we need to continue the rest of the activity. So I don't want to get into that situation because we don't know how many activity in future we can to add and it's I don't want to be dependent on this. So instead we can update this.</v>
+
+00:01:19.533 --> 00:01:20.333
+<v Carlos Marquez (Logic)>Yeah, yeah.</v>
+
+00:01:20.893 --> 00:01:23.693
+<v Krishna Kapadia (Logic)>code to implement the result entity endpoint.</v>
+
+00:01:24.813 --> 00:01:43.933
+<v Krishna Kapadia (Logic)>And we need, we will implement the agent for flow to find the entity ID and entity address ID, right? And we can store it in this record in this in this table, and for now we are only need accounts payable, right? So, what we can do?</v>
+
+00:01:32.093 --> 00:01:33.053
+<v Carlos Marquez (Logic)>Mhm, mhm.</v>
+
+00:01:38.413 --> 00:01:38.893
+<v Carlos Marquez (Logic)>Mhm.</v>
+
+00:01:44.253 --> 00:01:48.413
+<v Krishna Kapadia (Logic)>So we can only run this agentic flow for the account payable.</v>
+
+00:01:49.053 --> 00:01:49.573
+<v Carlos Marquez (Logic)>Mhm.</v>
+
+00:01:49.693 --> 00:02:01.133
+<v Krishna Kapadia (Logic)>So here we have a lot of extra commercial invoice, signature, unknown. So we don't need that, right? We only focus on the accounts payable. So we can avoid the extra agentic call.</v>
+
+00:01:57.133 --> 00:01:57.533
+<v Carlos Marquez (Logic)>No.</v>
+
+00:01:58.733 --> 00:01:59.133
+<v Carlos Marquez (Logic)>Yeah.</v>
+
+00:02:02.253 --> 00:02:12.013
+<v Krishna Kapadia (Logic)>And what we can do, we can run this for the rest of the tag, and we can only run for the accounts payable for the agentic flow.</v>
+
+00:02:13.853 --> 00:02:18.973
+<v Carlos Marquez (Logic)>Yeah, exactly. We can do that. Anyways, they said it.</v>
+
+00:02:15.133 --> 00:02:21.293
+<v Krishna Kapadia (Logic)>So, and so for running this information, yeah.</v>
+
+00:02:20.053 --> 00:02:32.173
+<v Carlos Marquez (Logic)>So, one question: just set identity directorio is nullable there, right? So, we can, we can find, so it can extract the company name, but let's say I don't, I didn't find any set identity, okay?</v>
+
+00:02:25.373 --> 00:02:25.773
+<v Krishna Kapadia (Logic)>Yeah.</v>
+
+00:02:30.813 --> 00:02:47.693
+<v Krishna Kapadia (Logic)>Correct. Yes. Yeah. And here for fetching this and city and director direction, we have this many parameter, entity name, text ID, URI, country code, city address. So while we are extracting the classified attachment, we only have the entity name.</v>
+
+00:02:43.533 --> 00:02:43.693
+<v Carlos Marquez (Logic)>Mm.</v>
+
+00:02:48.653 --> 00:02:49.133
+<v Carlos Marquez (Logic)>Mhm.</v>
+
+00:02:49.053 --> 00:02:55.133
+<v Krishna Kapadia (Logic)>We don't have the tax ID, ERI, so country code, I think I'm storing the country code.</v>
+
+00:02:53.853 --> 00:03:04.093
+<v Carlos Marquez (Logic)>But I think it, I think it's it's important that that in the agentic workflow, you you are able to fetch the document again.</v>
+
+00:03:05.373 --> 00:03:08.093
+<v Krishna Kapadia (Logic)>I think then we are increasing the cost.</v>
+
+00:03:09.133 --> 00:03:12.093
+<v Krishna Kapadia (Logic)>Because the same document we are processing multiple times then.</v>
+
+00:03:14.253 --> 00:03:22.013
+<v Carlos Marquez (Logic)>Are you storing the extracted company name somehow, somewhere?</v>
+
+00:03:23.213 --> 00:03:26.653
+<v Krishna Kapadia (Logic)>Just let me think of what we can do here.</v>
+
+00:03:27.853 --> 00:03:32.533
+<v Krishna Kapadia (Logic)>Can't we do this on the fly in the front end?</v>
+
+00:03:33.533 --> 00:03:47.853
+<v Krishna Kapadia (Logic)>Instead of creating this, so we already know that those are the accounts payable invoice, right? And here, like with fetching the runtime, this provision, can't we just fetch the vendor means the supplier using the endpoint?</v>
+
+00:03:47.053 --> 00:04:03.853
+<v Carlos Marquez (Logic)>Yeah, I mean, as a prototype, yes. But of course, the idea is that eventually this becomes fully agentic, right? So fully, like, imagine that once we have gone through all this cleaning stuff,</v>
+
+00:04:02.213 --> 00:04:21.213
+<v Krishna Kapadia (Logic)>Okay, so one thing I have idea. So here, while we are extracting the information, means the in the while we are inserting the recording the factor XI table, we can also fetch the CD ident detector direction and CD directory ID. And we can store that ID in the classification.</v>
+
+00:04:22.413 --> 00:04:23.053
+<v Carlos Marquez (Logic)>Mhm.</v>
+
+00:04:23.533 --> 00:04:27.133
+<v Krishna Kapadia (Logic)>So, here we are, we have the accounts payable record right only.</v>
+
+00:04:28.653 --> 00:04:29.053
+<v Carlos Marquez (Logic)>Uh-huh.</v>
+
+00:04:29.293 --> 00:04:48.013
+<v Krishna Kapadia (Logic)>In this table, so while we are processing this, we can pass the result entity input to AI agent, and based on this record, it will try to fetch the entity and entity address ID, and we can store that in the address ID and in this record in this table.</v>
+
+00:04:41.453 --> 00:04:41.933
+<v Carlos Marquez (Logic)>Mhm.</v>
+
+00:04:43.293 --> 00:04:43.773
+<v Carlos Marquez (Logic)>Mhm.</v>
+
+00:04:48.733 --> 00:04:52.253
+<v Carlos Marquez (Logic)>Okay, can you can you go back there? No.</v>
+
+00:04:53.293 --> 00:04:53.613
+<v Krishna Kapadia (Logic)>OK.</v>
+
+00:04:56.253 --> 00:05:15.693
+<v Carlos Marquez (Logic)>Wait, wait, wait, wait. I saw something there that was interesting. I think it was in the other table you were. Yeah. Oh, but that's in a different table. It's already, I was, that was extraction complex. That's the part that I was looking at. Because there I see that there is a player.</v>
+
+00:05:02.093 --> 00:05:02.173
+<v Krishna Kapadia (Logic)>The.</v>
+
+00:05:15.853 --> 00:05:17.773
+<v Carlos Marquez (Logic)>Super tax ID and maybe there.</v>
+
+00:05:16.973 --> 00:05:29.773
+<v Krishna Kapadia (Logic)>Yeah, this is what I'm saying to say: here, we have the all the extra record to fetch the CD identity directory directory, so we can do this step in the factor X.</v>
+
+00:05:22.413 --> 00:05:22.893
+<v Carlos Marquez (Logic)>Mhm.</v>
+
+00:05:24.893 --> 00:05:25.293
+<v Carlos Marquez (Logic)>HAM.</v>
+
+00:05:30.813 --> 00:05:31.133
+<v Carlos Marquez (Logic)>Yeah.</v>
+
+00:05:31.453 --> 00:05:35.933
+<v Krishna Kapadia (Logic)>And we can also store the CD and the director direction within the this object.</v>
+
+00:05:36.413 --> 00:05:37.053
+<v Carlos Marquez (Logic)>Exactly.</v>
+
+00:05:37.533 --> 00:05:40.093
+<v Krishna Kapadia (Logic)>No need to add one more column in this table.</v>
+
+00:05:38.013 --> 00:05:38.413
+<v Carlos Marquez (Logic)>Yeah.</v>
+
+00:05:40.413 --> 00:05:41.053
+<v Carlos Marquez (Logic)>I agree.</v>
+
+00:05:42.133 --> 00:05:42.493
+<v Carlos Marquez (Logic)>Well...</v>
+
+00:05:43.373 --> 00:05:56.573
+<v Carlos Marquez (Logic)>Yes, yes, but, but we, but there, but then we don't have say identity directorial there, do we? So, the the identity directorial, the identity directory direction should be in the same place.</v>
+
+00:05:57.853 --> 00:05:58.013
+<v Krishna Kapadia (Logic)>HAM.</v>
+
+00:06:00.093 --> 00:06:02.333
+<v Carlos Marquez (Logic)>I mean, just, and this is only for...</v>
+
+00:06:03.893 --> 00:06:04.133
+<v Carlos Marquez (Logic)>And.</v>
+
+00:06:06.813 --> 00:06:07.613
+<v Carlos Marquez (Logic)>For.</v>
+
+00:06:06.933 --> 00:06:10.573
+<v Krishna Kapadia (Logic)>So, can't we get this information without the CDNN director view?</v>
+
+00:06:13.693 --> 00:06:14.573
+<v Carlos Marquez (Logic)>AA.</v>
+
+00:06:14.013 --> 00:06:22.173
+<v Krishna Kapadia (Logic)>I, I need to, I need to see that while we are fetching this information, exactly information, are we using the CDND directory or not?</v>
+
+00:06:24.413 --> 00:06:38.973
+<v Krishna Kapadia (Logic)>If you are not using this information while fetching this information, it means this vector X radar, then we can remove these two fields, TDR and detector, and TDR and detection from this table, and we can extend this object to have those two information within this.</v>
+
+00:06:42.173 --> 00:06:47.053
+<v Krishna Kapadia (Logic)>So, here we already have these two information within the document, uh, executive.</v>
+
+00:06:42.573 --> 00:06:43.133
+<v Carlos Marquez (Logic)>No, wait.</v>
+
+00:06:45.853 --> 00:07:06.773
+<v Carlos Marquez (Logic)>No, no, you know what? So the directorial of the issuer, in case it's registered and exists, it can apply to more than only invoices. So, for example, that's why I think that it's correct that it's in the classification.</v>
+
+00:07:06.973 --> 00:07:09.053
+<v Carlos Marquez (Logic)>Side, although, although.</v>
+
+00:07:10.893 --> 00:07:11.453
+<v Carlos Marquez (Logic)>Um...</v>
+
+00:07:23.133 --> 00:07:27.053
+<v Carlos Marquez (Logic)>Remember that we have one, one, one, one, one.</v>
+
+00:07:28.853 --> 00:07:32.333
+<v Carlos Marquez (Logic)>A table that is called Factorex Trida Participantes.</v>
+
+00:07:34.333 --> 00:07:36.653
+<v Krishna Kapadia (Logic)>I think we are not using that that table.</v>
+
+00:07:37.773 --> 00:07:42.573
+<v Krishna Kapadia (Logic)>For the DE work, see that.</v>
+
+00:07:37.933 --> 00:07:39.613
+<v Carlos Marquez (Logic)>But, but we created, remember?</v>
+
+00:07:46.813 --> 00:07:47.373
+<v Krishna Kapadia (Logic)>This one?</v>
+
+00:07:48.813 --> 00:07:49.693
+<v Carlos Marquez (Logic)>We created it.</v>
+
+00:07:51.773 --> 00:07:52.813
+<v Krishna Kapadia (Logic)>Let me see.</v>
+
+00:07:51.933 --> 00:07:53.133
+<v Carlos Marquez (Logic)>You see, this is...</v>
+
+00:07:54.133 --> 00:07:55.293
+<v Krishna Kapadia (Logic)>Where we are using it?</v>
+
+00:07:54.333 --> 00:07:58.653
+<v Carlos Marquez (Logic)>This is where we have, this is where we have the directory of Ericsson.</v>
+
+00:07:59.133 --> 00:08:01.613
+<v Krishna Kapadia (Logic)>We are not using anywhere in the project.</v>
+
+00:08:07.693 --> 00:08:09.533
+<v Carlos Marquez (Logic)>But we we thought about this before.</v>
+
+00:08:17.213 --> 00:08:21.693
+<v Krishna Kapadia (Logic)>We have this table, but we are not using this and we are not inserting the record.</v>
+
+00:08:24.933 --> 00:08:33.373
+<v Carlos Marquez (Logic)>So it makes sense that in the, it makes sense that in the directorial, so in the classific.</v>
+
+00:08:34.973 --> 00:08:42.733
+<v Carlos Marquez (Logic)>Class classification activo digital, we only have identity directorio, because it's like the very first step.</v>
+
+00:08:43.613 --> 00:08:47.853
+<v Carlos Marquez (Logic)>But at this point, we are already using this.</v>
+
+00:08:49.053 --> 00:08:49.533
+<v Carlos Marquez (Logic)>Um...</v>
+
+00:08:53.333 --> 00:08:57.053
+<v Krishna Kapadia (Logic)>Where did we use? We don't have the created data.</v>
+
+00:09:00.493 --> 00:09:04.413
+<v Carlos Marquez (Logic)>Yeah, it come with this like it stopped, it stopped working at one point or what.</v>
+
+00:09:05.373 --> 00:09:11.293
+<v Krishna Kapadia (Logic)>Yeah, we are not. I think the earlier prototype in earlier we are we was using the table.</v>
+
+00:09:12.413 --> 00:09:12.573
+<v Carlos Marquez (Logic)>Mm.</v>
+
+00:09:13.293 --> 00:09:14.013
+<v Krishna Kapadia (Logic)>Then.</v>
+
+00:09:17.053 --> 00:09:20.893
+<v Krishna Kapadia (Logic)>Let's see the last, so.</v>
+
+00:09:27.693 --> 00:09:28.093
+<v Krishna Kapadia (Logic)>Steve.</v>
+
+00:09:30.293 --> 00:09:31.373
+<v Krishna Kapadia (Logic)>6725.</v>
+
+00:09:40.253 --> 00:09:42.653
+<v Krishna Kapadia (Logic)>We are using this table.</v>
+
+00:10:22.573 --> 00:10:25.933
+<v Krishna Kapadia (Logic)>Can't we add these two fields in this table?</v>
+
+00:10:28.733 --> 00:10:29.213
+<v Carlos Marquez (Logic)>Which?</v>
+
+00:10:29.773 --> 00:10:32.573
+<v Krishna Kapadia (Logic)>City identity detector and city identity detector direction.</v>
+
+00:10:34.733 --> 00:10:45.453
+<v Carlos Marquez (Logic)>Well, but it will, it won't be normalized, right? Because in the in the fact in the factura, in the invoices, you always have at least two companies.</v>
+
+00:10:46.493 --> 00:10:52.173
+<v Carlos Marquez (Logic)>So, if we add two, then probably we need we need to add four, right?</v>
+
+00:10:53.773 --> 00:11:03.613
+<v Krishna Kapadia (Logic)>Mains the same, so, for example, we are expecting this data for this invoice and we have stored it in this column right in a row.</v>
+
+00:10:57.693 --> 00:10:58.013
+<v Carlos Marquez (Logic)>CO.</v>
+
+00:11:00.573 --> 00:11:00.973
+<v Carlos Marquez (Logic)>Yeah.</v>
+
+00:11:04.813 --> 00:11:12.013
+<v Krishna Kapadia (Logic)>So you said that we could have multiple addresses, means multiple entity directory or direction for this invoice, right?</v>
+
+00:11:08.973 --> 00:11:09.693
+<v Carlos Marquez (Logic)>Exactly.</v>
+
+00:11:12.653 --> 00:11:25.133
+<v Carlos Marquez (Logic)>Exactly, and basically, by telling the by telling the model, there are there are potentially, or there are at least two companies involved, out of which one is your tenant.</v>
+
+00:11:26.133 --> 00:11:42.213
+<v Carlos Marquez (Logic)>One is a tenant, which also have its own identity and identity, but then you have the recipient of the invoice, and then you can have shipper and consignee. I mean, it's just like for clarity, it's better to it's better to have this normalized.</v>
+
+00:11:42.893 --> 00:11:43.373
+<v Krishna Kapadia (Logic)>Mmh.</v>
+
+00:11:47.133 --> 00:11:50.893
+<v Krishna Kapadia (Logic)>Why do why we need those information?</v>
+
+00:11:52.253 --> 00:11:52.733
+<v Carlos Marquez (Logic)>Which?</v>
+
+00:11:53.533 --> 00:11:56.213
+<v Krishna Kapadia (Logic)>These 2 CDN director and CDN director direction.</v>
+
+00:11:57.533 --> 00:11:58.573
+<v Carlos Marquez (Logic)>Because.</v>
+
+00:12:01.373 --> 00:12:01.933
+<v Carlos Marquez (Logic)>So...</v>
+
+00:12:04.413 --> 00:12:05.133
+<v Carlos Marquez (Logic)>DE.</v>
+
+00:12:14.493 --> 00:12:18.653
+<v Carlos Marquez (Logic)>Actually, are you in logic? So are you logged in right now or?</v>
+
+00:12:19.133 --> 00:12:21.773
+<v Krishna Kapadia (Logic)>No, not sure. Do I need to know?</v>
+
+00:12:20.013 --> 00:12:21.213
+<v Carlos Marquez (Logic)>Not yet. Okay, no worries.</v>
+
+00:12:22.333 --> 00:12:27.693
+<v Carlos Marquez (Logic)>No, no, no, no worries, no worries. Okay, I'm going to share my screen actually. Yeah, so you have to do it now.</v>
+
+00:12:32.413 --> 00:12:36.973
+<v Carlos Marquez (Logic)>Look, so we have a global directory, okay?</v>
+
+00:12:38.573 --> 00:12:39.373
+<v Carlos Marquez (Logic)>So...</v>
+
+00:12:40.213 --> 00:12:44.733
+<v Carlos Marquez (Logic)>when a user, when a country in this case.</v>
+
+00:12:46.333 --> 00:12:51.933
+<v Carlos Marquez (Logic)>Germany, okay? They created this company. They created it.</v>
+
+00:12:47.573 --> 00:12:48.253
+<v Krishna Kapadia (Logic)>Mmh.</v>
+
+00:12:53.013 --> 00:12:53.373
+<v Krishna Kapadia (Logic)>Mm.</v>
+
+00:12:53.173 --> 00:12:55.293
+<v Carlos Marquez (Logic)>But then, because...</v>
+
+00:12:56.813 --> 00:13:04.653
+<v Carlos Marquez (Logic)>This company is a group. When another office says I need to work with this same one.</v>
+
+00:13:06.333 --> 00:13:08.093
+<v Carlos Marquez (Logic)>They will say, OK.</v>
+
+00:13:09.053 --> 00:13:16.973
+<v Carlos Marquez (Logic)>I can, my sister company is also using it. So I can just come here and add an address.</v>
+
+00:13:18.013 --> 00:13:32.733
+<v Carlos Marquez (Logic)>And then I'm basically creating, like reusing the same identity directorial, and I'm just adding my own identity directorial direction, which automatically means that I am also using that.</v>
+
+00:13:34.333 --> 00:13:35.373
+<v Carlos Marquez (Logic)>Same entity.</v>
+
+00:13:36.813 --> 00:13:37.373
+<v Krishna Kapadia (Logic)>Mmh.</v>
+
+00:13:36.893 --> 00:13:41.533
+<v Carlos Marquez (Logic)>So that means that every address belonged to a different...</v>
+
+00:13:44.333 --> 00:13:47.213
+<v Carlos Marquez (Logic)>Company, yes, but of course we are not.</v>
+
+00:13:51.213 --> 00:13:58.333
+<v Carlos Marquez (Logic)>Restricting that one company can have only one address for the same entity.</v>
+
+00:13:59.413 --> 00:14:12.653
+<v Carlos Marquez (Logic)>So in this case, Brazil has two. One is inactive, but it could have two actives, and that should be fine as well, because the address can be slightly different. So meaning like this, Mediterranean shipping company that has...</v>
+
+00:14:01.733 --> 00:14:02.013
+<v Krishna Kapadia (Logic)>Yes.</v>
+
+00:14:15.613 --> 00:14:20.493
+<v Carlos Marquez (Logic)>A branch in this side of Switzerland and in this other side of Switzerland.</v>
+
+00:14:21.773 --> 00:14:24.573
+<v Carlos Marquez (Logic)>But they are all, they are all the same legal entity.</v>
+
+00:14:22.493 --> 00:14:23.173
+<v Krishna Kapadia (Logic)>Mmh.</v>
+
+00:14:25.293 --> 00:14:29.453
+<v Krishna Kapadia (Logic)>OK, and they in the invoice they are mentioning one of these addresses, right?</v>
+
+00:14:30.093 --> 00:14:32.213
+<v Carlos Marquez (Logic)>Exactly, yeah, and...</v>
+
+00:14:31.373 --> 00:14:42.413
+<v Krishna Kapadia (Logic)>And we need to fetch the parent address ID and the selected address ID. I mean the parent company means the double 486 and the what they mentioned in the invoice.</v>
+
+00:14:37.933 --> 00:14:38.813
+<v Carlos Marquez (Logic)>Exactly.</v>
+
+00:14:42.893 --> 00:14:55.373
+<v Carlos Marquez (Logic)>Exactly, and we know, and we know that this is the parent company, because usually because of the name, right? For example, we have a restriction here that is that you cannot have multiple.</v>
+
+00:14:47.053 --> 00:14:47.533
+<v Krishna Kapadia (Logic)>Mhm.</v>
+
+00:14:50.053 --> 00:14:50.573
+<v Krishna Kapadia (Logic)>Mhm.</v>
+
+00:14:56.653 --> 00:15:04.813
+<v Carlos Marquez (Logic)>countries in the same attached to the same entity ID because that would imply automatically that it's a different legal entity, right?</v>
+
+00:15:00.733 --> 00:15:01.453
+<v Krishna Kapadia (Logic)>Mhm.</v>
+
+00:15:05.533 --> 00:15:06.093
+<v Krishna Kapadia (Logic)>Okay.</v>
+
+00:15:07.093 --> 00:15:15.013
+<v Carlos Marquez (Logic)>So, they all need to be in the same country, but you can have, like, exactly.</v>
+
+00:15:10.413 --> 00:15:10.653
+<v Krishna Kapadia (Logic)>Mm.</v>
+
+00:15:12.093 --> 00:15:13.933
+<v Krishna Kapadia (Logic)>They could have multiple brands, right?</v>
+
+00:15:15.933 --> 00:15:18.333
+<v Carlos Marquez (Logic)>But, and still remain as the same legal entity.</v>
+
+00:15:20.413 --> 00:15:20.573
+<v Krishna Kapadia (Logic)>Mm.</v>
+
+00:15:21.853 --> 00:15:30.573
+<v Krishna Kapadia (Logic)>So then why we are using a creating provision for the branches instead of the parent company?</v>
+
+00:15:33.613 --> 00:15:43.453
+<v Carlos Marquez (Logic)>Because sometimes each branch will have a different accounts payable or accounts receivable.</v>
+
+00:15:37.533 --> 00:15:38.013
+<v Krishna Kapadia (Logic)>Mhm.</v>
+
+00:15:47.213 --> 00:15:48.093
+<v Carlos Marquez (Logic)>Let's call it.</v>
+
+00:15:49.773 --> 00:16:07.613
+<v Carlos Marquez (Logic)>account repository or like accounting repository. So it's like if I am, so let's say that I am invoicing to this company, but for this address, it's a different statement of account for accounts payables and receivable than this other one.</v>
+
+00:16:04.573 --> 00:16:05.053
+<v Krishna Kapadia (Logic)>HAM.</v>
+
+00:16:08.733 --> 00:16:21.693
+<v Carlos Marquez (Logic)>So they might, they may be different. They have like different administrative people working like this. This branch has one people and I am sending invoices to this branch in particular.</v>
+
+00:16:08.813 --> 00:16:09.213
+<v Krishna Kapadia (Logic)>Ohh.</v>
+
+00:16:18.733 --> 00:16:18.893
+<v Krishna Kapadia (Logic)>I.</v>
+
+00:16:22.173 --> 00:16:24.733
+<v Krishna Kapadia (Logic)>Then one invoice contain only one branch, right?</v>
+
+00:16:25.613 --> 00:16:27.613
+<v Carlos Marquez (Logic)>Yes, so that's why, exactly.</v>
+
+00:16:26.573 --> 00:16:36.493
+<v Krishna Kapadia (Logic)>Then why then why we need the separate table for storing the and directory directory reaction and CD and the directory?</v>
+
+00:16:38.413 --> 00:16:46.253
+<v Krishna Kapadia (Logic)>Because the one invoice contain only one branch, right? And branch means the CD identity of detection, correct?</v>
+
+00:16:38.733 --> 00:16:39.373
+<v Carlos Marquez (Logic)>No.</v>
+
+00:16:47.853 --> 00:17:07.093
+<v Carlos Marquez (Logic)>Yes, yeah, but, but, but if you, if we had like only one table directory direction, then we would be repeating a lot of data, like, for example, the company name, as many times as branches, as many times as as companies using the same branch.</v>
+
+00:17:07.373 --> 00:17:11.053
+<v Carlos Marquez (Logic)>Like company, like a tenant. In this case, this is a tenant, no?</v>
+
+00:17:11.573 --> 00:17:11.853
+<v Krishna Kapadia (Logic)>CO.</v>
+
+00:17:14.093 --> 00:17:15.693
+<v Carlos Marquez (Logic)>So, it's normalization.</v>
+
+00:17:16.413 --> 00:17:16.893
+<v Krishna Kapadia (Logic)>Mhm.</v>
+
+00:17:18.333 --> 00:17:22.413
+<v Carlos Marquez (Logic)>The reason that the answer to your question is normalization.</v>
+
+00:17:23.053 --> 00:17:23.773
+<v Krishna Kapadia (Logic)>Mmh.</v>
+
+00:17:25.933 --> 00:17:27.853
+<v Krishna Kapadia (Logic)>The record will be 1 to one, right?</v>
+
+00:17:29.373 --> 00:17:39.933
+<v Carlos Marquez (Logic)>On the on the on the provision and on the table, yes, so it will be 1 identity directorial to 1 identity directorial direction, yes.</v>
+
+00:17:43.773 --> 00:17:51.373
+<v Krishna Kapadia (Logic)>And, based on the invoice only, we could have the one CDNN director and CDNN detector, right?</v>
+
+00:17:51.133 --> 00:18:10.053
+<v Carlos Marquez (Logic)>Exactly. And exactly, if you look at the invoice, it will always be one company and one address, always. So it's never going to be one company and multiple addresses, even though the issuing entity, it will always be, it's always going out of a building.</v>
+
+00:17:55.933 --> 00:17:56.173
+<v Krishna Kapadia (Logic)>Mm.</v>
+
+00:17:59.573 --> 00:17:59.773
+<v Krishna Kapadia (Logic)>Mm.</v>
+
+00:18:02.173 --> 00:18:02.293
+<v Krishna Kapadia (Logic)>Wow.</v>
+
+00:18:10.173 --> 00:18:14.253
+<v Carlos Marquez (Logic)>That's my point. So an invoice is never going from multiple buildings.</v>
+
+00:18:16.093 --> 00:18:18.573
+<v Carlos Marquez (Logic)>It's just one building issuing the invoice.</v>
+
+00:18:16.333 --> 00:18:17.533
+<v Krishna Kapadia (Logic)>Okay.</v>
+
+00:18:19.933 --> 00:18:24.973
+<v Krishna Kapadia (Logic)>OK, then we need to create a one more table with the reference of the factor X right now.</v>
+
+00:18:27.133 --> 00:18:28.173
+<v Krishna Kapadia (Logic)>Uh, and DE.</v>
+
+00:18:30.173 --> 00:18:31.213
+<v Krishna Kapadia (Logic)>Each year of that.</v>
+
+00:18:32.573 --> 00:18:33.613
+<v Carlos Marquez (Logic)>I don't think so.</v>
+
+00:18:32.653 --> 00:18:33.853
+<v Krishna Kapadia (Logic)>I mean, city and direct to the.</v>
+
+00:18:34.493 --> 00:18:38.573
+<v Carlos Marquez (Logic)>I, I think I think we have we have it already, but why I mean...</v>
+
+00:18:35.053 --> 00:18:35.213
+<v Krishna Kapadia (Logic)>BR.</v>
+
+00:18:37.613 --> 00:18:43.453
+<v Krishna Kapadia (Logic)>The Factory X-ray participants, this table, that table, but we are not using that, so...</v>
+
+00:18:39.933 --> 00:18:41.613
+<v Carlos Marquez (Logic)>Yeah, yeah, yeah.</v>
+
+00:18:47.373 --> 00:18:50.013
+<v Carlos Marquez (Logic)>But this is a table where we were looking for.</v>
+
+00:18:50.653 --> 00:18:51.373
+<v Krishna Kapadia (Logic)>Okay.</v>
+
+00:18:52.573 --> 00:18:54.573
+<v Carlos Marquez (Logic)>So this is where we have to extract it.</v>
+
+00:18:55.813 --> 00:18:56.093
+<v Krishna Kapadia (Logic)>Mm.</v>
+
+00:18:56.093 --> 00:19:11.533
+<v Carlos Marquez (Logic)>So, and you can, you can think that, you can think that the very first, so the identity directorio and in in the classification Octavio Digital is just the first attempt.</v>
+
+00:19:14.413 --> 00:19:16.173
+<v Krishna Kapadia (Logic)>Sorry, sir, can you repeat that last one?</v>
+
+00:19:17.053 --> 00:19:24.813
+<v Carlos Marquez (Logic)>So the identity directorial that we are saving in classification activo digital, it's only the first attempt.</v>
+
+00:19:23.213 --> 00:19:23.373
+<v Krishna Kapadia (Logic)>Mm.</v>
+
+00:19:25.133 --> 00:19:25.693
+<v Krishna Kapadia (Logic)>Correct.</v>
+
+00:19:27.213 --> 00:19:35.173
+<v Carlos Marquez (Logic)>The final attempt, it's in Facture Extraida participantes, at least for this particular agent.</v>
+
+00:19:31.373 --> 00:19:31.853
+<v Krishna Kapadia (Logic)>Okay.</v>
+
+00:19:36.813 --> 00:19:49.533
+<v Krishna Kapadia (Logic)>So, what we can do, we can extend the exception part, means while we are storing the factor XIDA record, we can also store the factor XIDA participants record.</v>
+
+00:19:46.573 --> 00:19:47.053
+<v Carlos Marquez (Logic)>Mhm.</v>
+
+00:19:50.413 --> 00:19:50.893
+<v Carlos Marquez (Logic)>Mhm.</v>
+
+00:19:51.293 --> 00:19:56.493
+<v Krishna Kapadia (Logic)>while doing this step. So because we don't need to extract the same invoice two times.</v>
+
+00:19:57.373 --> 00:19:57.693
+<v Carlos Marquez (Logic)>Yeah.</v>
+
+00:20:01.373 --> 00:20:01.933
+<v Krishna Kapadia (Logic)>Okay.</v>
+
+00:20:01.613 --> 00:20:02.093
+<v Carlos Marquez (Logic)>Yeah.</v>
+
+00:20:16.893 --> 00:20:17.373
+<v Carlos Marquez (Logic)>Mhm.</v>
+
+00:20:17.453 --> 00:20:22.893
+<v Krishna Kapadia (Logic)>multiple address ID, then what should we do?</v>
+
+00:20:24.493 --> 00:20:25.133
+<v Carlos Marquez (Logic)>Um...</v>
+
+00:20:25.373 --> 00:20:25.533
+<v Carlos Marquez (Logic)>Mm.</v>
+
+00:20:25.853 --> 00:20:32.093
+<v Krishna Kapadia (Logic)>So in the match case, we have one entity ID and multiple entity address IDs.</v>
+
+00:20:27.853 --> 00:20:28.333
+<v Carlos Marquez (Logic)>Mhm.</v>
+
+00:20:32.333 --> 00:20:32.893
+<v Carlos Marquez (Logic)>Yes.</v>
+
+00:20:34.453 --> 00:20:35.293
+<v Krishna Kapadia (Logic)>then what could we do?</v>
+
+00:20:35.773 --> 00:20:38.333
+<v Carlos Marquez (Logic)>OK, so we should let the agent.</v>
+
+00:20:40.413 --> 00:20:45.533
+<v Carlos Marquez (Logic)>work in a loop, okay, with a max amount of attempts or of tries.</v>
+
+00:20:47.213 --> 00:20:53.293
+<v Carlos Marquez (Logic)>So it just doesn't do forever. And we need to give him the possibility.</v>
+
+00:20:49.613 --> 00:20:50.013
+<v Krishna Kapadia (Logic)>Ohh.</v>
+
+00:20:54.173 --> 00:20:56.013
+<v Carlos Marquez (Logic)>To access different.</v>
+
+00:20:57.933 --> 00:21:05.693
+<v Carlos Marquez (Logic)>To use different tools, for example, and I'm doing a transcript now for us for later to review, but...</v>
+
+00:21:05.773 --> 00:21:06.413
+<v Krishna Kapadia (Logic)>Mhm.</v>
+
+00:21:09.213 --> 00:21:12.493
+<v Carlos Marquez (Logic)>If the result, if the result is ambiguous.</v>
+
+00:21:13.213 --> 00:21:13.373
+<v Krishna Kapadia (Logic)>HAM.</v>
+
+00:21:13.373 --> 00:21:23.933
+<v Carlos Marquez (Logic)>Then the response will say the result is ambiguous. This is the this is the this is the some of the companies I found.</v>
+
+00:21:27.053 --> 00:21:45.333
+<v Carlos Marquez (Logic)>And, in the bottom of the response, there we can we can implement their recommendations. OK, and that recommendation could be, for example, to the agent to say, use this tool.</v>
+
+00:21:46.413 --> 00:21:47.133
+<v Carlos Marquez (Logic)>To check.</v>
+
+00:21:49.213 --> 00:21:50.093
+<v Carlos Marquez (Logic)>And, and I'm just...</v>
+
+00:21:51.293 --> 00:21:52.653
+<v Carlos Marquez (Logic)>Talking out loud here, right?</v>
+
+00:21:53.293 --> 00:21:53.453
+<v Krishna Kapadia (Logic)>HAM.</v>
+
+00:21:53.933 --> 00:21:55.773
+<v Carlos Marquez (Logic)>Uh, to check previous.</v>
+
+00:21:56.813 --> 00:22:02.173
+<v Carlos Marquez (Logic)>Uh, cases, because, because we have 33 different scenarios.</v>
+
+00:22:03.253 --> 00:22:22.813
+<v Carlos Marquez (Logic)>In the scenario one, the ambiguity comes from the PDF itself. Okay, so the PDF can be ambiguous, as the example we were talking about, where the company name and the address, it's on the top right corner where it's supposed to be.</v>
+
+00:22:23.453 --> 00:22:30.573
+<v Carlos Marquez (Logic)>But that's actually the incorrect one. The correct one is below hidden in small letters. OK.</v>
+
+00:22:31.773 --> 00:22:51.893
+<v Carlos Marquez (Logic)>So the ambiguity can come from the PDF itself. This is the first case scenario. In the second scenario, the ambiguity can come from the from a duplicate like, but like low quality data in the directorial. OK, this is the second scenario.</v>
+
+00:22:53.533 --> 00:22:54.093
+<v Carlos Marquez (Logic)>Um...</v>
+
+00:22:56.413 --> 00:22:58.813
+<v Carlos Marquez (Logic)>And, in the third scenario...</v>
+
+00:23:00.613 --> 00:23:03.213
+<v Carlos Marquez (Logic)>In this, I remember we had I had a third scenario.</v>
+
+00:23:04.333 --> 00:23:05.853
+<v Carlos Marquez (Logic)>In the third scenario.</v>
+
+00:23:18.733 --> 00:23:21.453
+<v Carlos Marquez (Logic)>Well, the third scenario is basically...</v>
+
+00:23:23.133 --> 00:23:23.373
+<v Carlos Marquez (Logic)>Um...</v>
+
+00:23:25.893 --> 00:23:27.253
+<v Carlos Marquez (Logic)>The company just doesn't exist.</v>
+
+00:23:28.493 --> 00:23:28.893
+<v Carlos Marquez (Logic)>Right.</v>
+
+00:23:28.893 --> 00:23:29.413
+<v Krishna Kapadia (Logic)>Cool.</v>
+
+00:23:30.813 --> 00:23:32.413
+<v Carlos Marquez (Logic)>So, there is no...</v>
+
+00:23:33.933 --> 00:23:39.533
+<v Carlos Marquez (Logic)>Either, either there is no the identity directory that really matches with that company, or...</v>
+
+00:23:41.133 --> 00:23:44.093
+<v Carlos Marquez (Logic)>The company exists, but not for that tenant.</v>
+
+00:23:45.373 --> 00:23:49.933
+<v Carlos Marquez (Logic)>OK, so, for example, here, let's look for logic.</v>
+
+00:24:29.533 --> 00:24:32.653
+<v Carlos Marquez (Logic)>I think logic is duplicate, logic solution.</v>
+
+00:24:34.413 --> 00:24:34.733
+<v Carlos Marquez (Logic)>In.</v>
+
+00:25:03.133 --> 00:25:03.613
+<v Carlos Marquez (Logic)>Okay.</v>
+
+00:25:07.213 --> 00:25:07.693
+<v Carlos Marquez (Logic)>Look.</v>
+
+00:25:08.573 --> 00:25:09.693
+<v Carlos Marquez (Logic)>Logic Solutions.</v>
+
+00:25:12.253 --> 00:25:20.973
+<v Carlos Marquez (Logic)>It's available for Schryver, Germany, Schryver, Colombia, Schryver, Mexico, Schryver, Peru, Schryver, USA, and Schryver, Uruguay.</v>
+
+00:25:23.373 --> 00:25:26.333
+<v Carlos Marquez (Logic)>Ohh, hold on, we have a second thing.</v>
+
+00:25:27.293 --> 00:25:30.893
+<v Krishna Kapadia (Logic)>But the city were USA, why is Hindi Germany?</v>
+
+00:25:31.853 --> 00:25:36.973
+<v Carlos Marquez (Logic)>Oh no, no, no, no, this is like the country, this is the country where the company is located.</v>
+
+00:25:38.653 --> 00:25:40.333
+<v Carlos Marquez (Logic)>This is the country of the company.</v>
+
+00:25:40.653 --> 00:25:40.893
+<v Krishna Kapadia (Logic)>HAM.</v>
+
+00:25:42.413 --> 00:25:42.893
+<v Krishna Kapadia (Logic)>Okay.</v>
+
+00:25:42.733 --> 00:25:53.373
+<v Carlos Marquez (Logic)>Right, so look, then we have here logic solutions at ACISA. OK, this.</v>
+
+00:25:52.013 --> 00:25:52.493
+<v Krishna Kapadia (Logic)>Mhm.</v>
+
+00:25:55.853 --> 00:26:06.253
+<v Carlos Marquez (Logic)>could produce an ambiguous part, right? Not if you pass the country, because if you pass the country, Germany, you won't get this one.</v>
+
+00:26:07.133 --> 00:26:07.373
+<v Krishna Kapadia (Logic)>Mm.</v>
+
+00:26:07.933 --> 00:26:16.573
+<v Carlos Marquez (Logic)>OK, however, what if what if the document the invoice is currently being processed by?</v>
+
+00:26:08.893 --> 00:26:09.053
+<v Krishna Kapadia (Logic)>Mm.</v>
+
+00:26:17.453 --> 00:26:36.493
+<v Carlos Marquez (Logic)>Schryver, Morocco, for example, that is not here. I've never invoiced directly to Morocco, so that means that if I send an invoice to an account in Schryver, Morocco, they will find Logic Solutions as entity ID, but they shouldn't find entity address ID.</v>
+
+00:26:37.213 --> 00:26:40.733
+<v Carlos Marquez (Logic)>because they don't have an entity address ID for their tenant.</v>
+
+00:26:41.293 --> 00:26:41.773
+<v Krishna Kapadia (Logic)>Who?</v>
+
+00:26:43.293 --> 00:26:45.053
+<v Carlos Marquez (Logic)>OK, so.</v>
+
+00:26:44.093 --> 00:26:44.573
+<v Krishna Kapadia (Logic)>Mhm.</v>
+
+00:26:49.053 --> 00:26:52.573
+<v Carlos Marquez (Logic)>This is how the ambiguity should be resolved, right?</v>
+
+00:26:56.813 --> 00:26:57.053
+<v Krishna Kapadia (Logic)>HAM.</v>
+
+00:27:01.613 --> 00:27:03.133
+<v Carlos Marquez (Logic)>So, scenario one.</v>
+
+00:27:06.013 --> 00:27:07.813
+<v Carlos Marquez (Logic)>The ambiguity is coming from the...</v>
+
+00:27:09.373 --> 00:27:10.013
+<v Carlos Marquez (Logic)>Document.</v>
+
+00:27:11.453 --> 00:27:15.773
+<v Carlos Marquez (Logic)>And we let, we, I think that we, it's important we let the the agent.</v>
+
+00:27:16.653 --> 00:27:18.173
+<v Carlos Marquez (Logic)>To agentically.</v>
+
+00:27:20.253 --> 00:27:32.333
+<v Carlos Marquez (Logic)>react based on their response. And we control the response because we can add remarks, observations, recommendations for certain scenarios of the response.</v>
+
+00:27:34.813 --> 00:27:54.533
+<v Carlos Marquez (Logic)>Only enough for the agent to keep going, right? So we don't have to provide much more information than it's needed. In the second scenario, the ambiguity comes from the fact that there are two logic solutions, which means that there are two different entity IDs.</v>
+
+00:27:42.213 --> 00:27:42.333
+<v Krishna Kapadia (Logic)>HAM.</v>
+
+00:27:55.653 --> 00:28:00.653
+<v Carlos Marquez (Logic)>And we have it like frequently, actually. Let's see with MSC, MSC.</v>
+
+00:28:04.093 --> 00:28:04.493
+<v Carlos Marquez (Logic)>Look.</v>
+
+00:28:06.893 --> 00:28:09.693
+<v Carlos Marquez (Logic)>I think this is a good example. Look.</v>
+
+00:28:11.293 --> 00:28:17.853
+<v Carlos Marquez (Logic)>MSC Mediterranean Shipping Company SA. Of course this is going to get trimmed. This is going to get trimmed.</v>
+
+00:28:21.773 --> 00:28:34.013
+<v Carlos Marquez (Logic)>Here, look, Mediterranean Shipping Company SA and S Space A, both for Schryver, Ecuador, both the same address. You see?</v>
+
+00:28:23.533 --> 00:28:23.933
+<v Krishna Kapadia (Logic)>Ohh.</v>
+
+00:28:26.573 --> 00:28:27.133
+<v Krishna Kapadia (Logic)>Mhm.</v>
+
+00:28:29.013 --> 00:28:29.293
+<v Krishna Kapadia (Logic)>Mm.</v>
+
+00:28:34.573 --> 00:28:35.053
+<v Krishna Kapadia (Logic)>Mmh.</v>
+
+00:28:37.613 --> 00:28:42.013
+<v Carlos Marquez (Logic)>So this is going to be completely ambiguous, fully ambiguous.</v>
+
+00:28:38.013 --> 00:28:38.333
+<v Krishna Kapadia (Logic)>Bugeda.</v>
+
+00:28:41.533 --> 00:28:46.413
+<v Krishna Kapadia (Logic)>But, OK, how the AI identify which one should pick?</v>
+
+00:28:47.133 --> 00:28:49.453
+<v Carlos Marquez (Logic)>It can't. It just can't.</v>
+
+00:28:51.293 --> 00:28:51.773
+<v Carlos Marquez (Logic)>Um...</v>
+
+00:28:54.173 --> 00:28:58.173
+<v Carlos Marquez (Logic)>The AI will have to say, I don't know.</v>
+
+00:29:02.093 --> 00:29:17.453
+<v Carlos Marquez (Logic)>And we should block it, we should block it at the time when the user, when the this is one of the things that we should say, we couldn't find it right, and probably we need to say this is.</v>
+
+00:29:02.333 --> 00:29:02.813
+<v Krishna Kapadia (Logic)>OK.</v>
+
+00:29:18.573 --> 00:29:20.973
+<v Carlos Marquez (Logic)>So, in the extracted data.</v>
+
+00:29:22.173 --> 00:29:31.373
+<v Carlos Marquez (Logic)>we should somehow say this field is incomplete because it doesn't have the entity ID address, right? The entity address ID.</v>
+
+00:29:30.893 --> 00:29:31.373
+<v Krishna Kapadia (Logic)>Mmh.</v>
+
+00:29:33.293 --> 00:29:36.733
+<v Carlos Marquez (Logic)>So it's either there or it needs human intervention.</v>
+
+00:29:34.733 --> 00:29:34.773
+<v Krishna Kapadia (Logic)>I.</v>
+
+00:29:43.453 --> 00:29:43.933
+<v Krishna Kapadia (Logic)>Okay.</v>
+
+00:29:46.413 --> 00:30:04.333
+<v Carlos Marquez (Logic)>And this is my point. So this, after a few attempts, this should trigger, this should be a flag for the user to, for a user to come back and resolve it. So what needs to happen here is that someone needs to come and delete one of them.</v>
+
+00:30:05.533 --> 00:30:07.453
+<v Carlos Marquez (Logic)>Literally like coming here, like in the lead.</v>
+
+00:30:10.733 --> 00:30:26.053
+<v Carlos Marquez (Logic)>Make sure that all the invoices there are closed, and then probably we need to implement here a migration, right? So, like migrate invoices and...</v>
+
+00:30:27.333 --> 00:30:39.413
+<v Carlos Marquez (Logic)>And then once the invoices are migrated, then to the correct one, then we just deactivate this one. So that's why the tenant is important, but also that's why the status is important.</v>
+
+00:30:50.333 --> 00:30:50.853
+<v Krishna Kapadia (Logic)>Okay.</v>
+
+00:32:30.613 --> 00:32:37.973
+<v Carlos Marquez (Logic)>So my point there is that we, so what everything we have up to this point serves, right? It's useful.</v>
+
+00:32:37.173 --> 00:32:37.653
+<v Krishna Kapadia (Logic)>Mhm.</v>
+
+00:32:38.613 --> 00:32:38.933
+<v Krishna Kapadia (Logic)>HAM.</v>
+
+00:32:38.973 --> 00:32:55.333
+<v Carlos Marquez (Logic)>Then we need to extend the Factory Extrada, and and we we were planning it before, right? Already for the for this part, we just like kind of like stop working on it because we were very focused on certain examples, certain test cases.</v>
+
+00:32:55.893 --> 00:32:56.493
+<v Krishna Kapadia (Logic)>Mhm.</v>
+
+00:32:56.933 --> 00:33:07.093
+<v Carlos Marquez (Logic)>When we try to extend this to the whole universe of invoices, we see that we have to, we have to include it.</v>
+
+00:33:08.373 --> 00:33:09.173
+<v Carlos Marquez (Logic)>And...</v>
+
+00:33:11.653 --> 00:33:12.053
+<v Carlos Marquez (Logic)>HAM.</v>
+
+00:33:19.173 --> 00:33:20.373
+<v Carlos Marquez (Logic)>So...</v>
+
+00:33:22.773 --> 00:33:42.653
+<v Carlos Marquez (Logic)>We just have to extend it, so it takes whatever it takes whatever we have already over there, like, and it questions it, and it just populates the participantes on which we would be actually performing the.</v>
+
+00:33:26.813 --> 00:33:27.093
+<v Krishna Kapadia (Logic)>Mm.</v>
+
+00:33:44.053 --> 00:33:44.613
+<v Carlos Marquez (Logic)>Yeah.</v>
+
+00:33:46.773 --> 00:34:07.413
+<v Carlos Marquez (Logic)>Like we will take for the, basically this is for provision creation, right? Because when we find the provisions, and this is probably why we have, we ignored this part, because we were focused, focusing more on finding the provisions that it's already there. And we need the entity address ID.</v>
+
+00:34:04.773 --> 00:34:05.173
+<v Krishna Kapadia (Logic)>Hmm.</v>
+
+00:34:07.973 --> 00:34:08.533
+<v Krishna Kapadia (Logic)>Who?</v>
+
+00:34:08.853 --> 00:34:11.413
+<v Carlos Marquez (Logic)>for the case of creating provisions.</v>
+
+00:34:16.373 --> 00:34:16.533
+<v Krishna Kapadia (Logic)>HAM.</v>
+
+00:34:27.733 --> 00:34:28.373
+<v Krishna Kapadia (Logic)>Okay.</v>
+
+00:34:39.733 --> 00:34:44.933
+<v Carlos Marquez (Logic)>And at the end, the gate, the gate is...</v>
+
+00:34:45.653 --> 00:34:46.213
+<v Carlos Marquez (Logic)>How?</v>
+
+00:34:47.413 --> 00:34:56.133
+<v Carlos Marquez (Logic)>at the time we enable the user to create a provision. Is there entity ID and entity address ID? Yes or no?</v>
+
+00:34:53.733 --> 00:34:53.973
+<v Krishna Kapadia (Logic)>She.</v>
+
+00:34:57.653 --> 00:35:02.453
+<v Carlos Marquez (Logic)>If it's a no, then we have to force the user to go back and select manually. That's it.</v>
+
+00:35:05.733 --> 00:35:06.293
+<v Krishna Kapadia (Logic)>Okay.</v>
+
+00:35:09.493 --> 00:35:12.293
+<v Krishna Kapadia (Logic)>OK, let me work on that, and I will let you know.</v>
+
+00:35:13.253 --> 00:35:17.013
+<v Carlos Marquez (Logic)>All right, Krish. Okay, cool. See ya. Thank you. Bye bye.</v>
+
+00:35:15.093 --> 00:35:16.613
+<v Krishna Kapadia (Logic)>Thank you. Bye.</v>
+
