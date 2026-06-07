@@ -1,0 +1,12 @@
+# Substrate source is pulled for context only — never committed to po-lab
+*/source/
+*/*/source/
+
+# OS / tooling noise
+.DS_Store
+__pycache__/
+*.pyc
+.venv/
+venv/
+.idea/
+.vscode/
