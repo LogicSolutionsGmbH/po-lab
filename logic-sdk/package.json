@@ -1,0 +1,20 @@
+{
+  "name": "logic-sdk-workspace",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Logic SDK (in-process shared capabilities). Prototype: entity-resolution = capability #1.",
+  "scripts": {
+    "build": "pnpm --filter @logic/entity-resolution build",
+    "typecheck": "pnpm --filter @logic/entity-resolution typecheck",
+    "harness": "pnpm --filter @logic/entity-resolution harness"
+  },
+  "devDependencies": {
+    "@tsconfig/node18": "^18.2.4",
+    "@types/node": "^22.9.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
