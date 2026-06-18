@@ -48,5 +48,6 @@ refresh any substrate's `source/`.
 | `email-worker` | [Logic-Solutions-GmbH/logic-email-worker](https://github.com/Logic-Solutions-GmbH/logic-email-worker) | scaffolded; `source/` @ `main` `1317df8` |
 | `core-node` | [Logic-Solutions-GmbH/logic-core-node](https://github.com/Logic-Solutions-GmbH/logic-core-node) | scaffolded; `source/` @ `main` `5d91940` |
 | `schryver-mvc` | [Logic-Solutions-GmbH/logic-schryverMvc](https://github.com/Logic-Solutions-GmbH/logic-schryverMvc) | scaffolded; `source/` @ `master` `fbe1cb598` |
+| `heroes` | [Logic-Solutions-GmbH/logic-heroes](https://github.com/Logic-Solutions-GmbH/logic-heroes) | scaffolded; `source/` @ `main` `fc98d87`; credential-store research + cross-exam in `notes/` |
 
 Full architecture: `ai-engineering/LogicSolutionsGmbH/docs/superpowers/specs/2026-06-07-po-lab-architecture-design.md`
