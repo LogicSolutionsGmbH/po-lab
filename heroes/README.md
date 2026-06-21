@@ -10,7 +10,7 @@ Context home for **Logic Heroes** (visibility / track-and-trace platform) analys
 | Local context clone | `source/` (this folder) | **No** — gitignored, pulled for reading only |
 | My analysis work | `queries/`, `transforms/`, `prototypes/`, `notes/` | Yes — push to `po-lab` |
 
-Context commit: `main` @ `fc98d87` (pulled 2026-06-18).
+Context commit: `feature/heroes-cli-examples` @ `36db572` (pulled 2026-06-20).
 
 ## Pull / refresh context
 
@@ -31,3 +31,9 @@ Or use the **pull-context** skill.
 
 Origin: 2026-06-01 Heroes credential-storage design call (Carlos + Dima + Valeriy).
 See KB `Projects/Logic Heroes.md` → "Per-tenant credential / secret storage".
+
+- `prototypes/heroes-demo-kit/` — self-contained, downloadable kit that wraps the
+  `examples/heroes-cli` scripts in two Claude skills (`heroes-assigner`,
+  `heroes-taker`) over a shared reference, so a client can open a Claude session,
+  add `.env` credentials + a payload, and drive the handshake happy path in plain
+  English. Rationale in `notes/heroes-cli-skills-vs-commands.md`.

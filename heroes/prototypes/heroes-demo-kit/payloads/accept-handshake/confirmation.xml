@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServiceConfirmation>
+  <ProviderReference>PROV-12345</ProviderReference>
+  <Status>ACCEPTED</Status>
+  <Carrier>Schryver Logistics</Carrier>
+  <PickupConfirmed>2026-07-01T08:00:00Z</PickupConfirmed>
+  <Notes>Confirmed under standard terms. Driver details to follow.</Notes>
+</ServiceConfirmation>

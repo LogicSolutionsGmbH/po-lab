@@ -1,0 +1,16 @@
+{
+  "bookingReference": "BKG-2026-0042",
+  "shipper": "Acme Manufacturing GmbH",
+  "consignee": "Northwind Distribution Ltd",
+  "origin": "DEHAM",
+  "destination": "NLRTM",
+  "incoterm": "FCA",
+  "cargo": {
+    "description": "Industrial machine parts",
+    "packages": 12,
+    "grossWeightKg": 8400,
+    "volumeM3": 18.5
+  },
+  "requestedPickup": "2026-07-01",
+  "terms": "Standard terms apply"
+}
