@@ -10,7 +10,7 @@
  *       [--service-key <key>] [--name <eventName>] [--lo-code <UNLOCODE>]
  *
  * Example:
- *   npx tsx create-shipment.ts ./payloads/shipment-booking \
+ *   npx tsx create-shipment.ts ./payloads/handshake/request-service \
  *       --target schryver --service-key ltl_pickup_origin
  */
 import {

@@ -11,7 +11,7 @@
  *
  * Example:
  *   npx tsx accept-strategy.ts 550e8400-... --provider-ref PROV-12345 \
- *       ./payloads/accept-handshake
+ *       ./payloads/handshake/accept
  */
 import {
   run,

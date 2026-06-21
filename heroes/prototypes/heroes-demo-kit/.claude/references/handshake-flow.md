@@ -41,8 +41,10 @@ uploaded as a multipart attachment automatically.
 
 To use a client's own document: create a new folder under `payloads/`, drop the
 single file in, and pass that folder path to the script. Shipped examples:
-- `payloads/shipment-booking/booking.json` — booking sent by the assigner.
-- `payloads/accept-handshake/confirmation.xml` — confirmation sent by the taker.
+Payloads are grouped by strategy, so other strategies can sit beside `handshake/`:
+- `payloads/handshake/request-service/booking.json` — booking sent by the assigner
+  when requesting the service.
+- `payloads/handshake/accept/confirmation.xml` — confirmation sent by the taker on accept.
 
 ## Verifying state (either role)
 

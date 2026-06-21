@@ -30,9 +30,10 @@ folder — see **`API-SCRIPTS.md`** for the raw CLI.
    ```
 
 3. **Add a payload (optional).** A payload is the document attached to a request.
-   Two examples ship in `payloads/` (`shipment-booking/booking.json`,
-   `accept-handshake/confirmation.xml`). To use your own, make a new folder under
-   `payloads/` holding **exactly one file** and reference it by name when you ask.
+   Payloads are grouped by strategy. Two examples ship under `payloads/handshake/`
+   (`request-service/booking.json`, `accept/confirmation.xml`). To use your own,
+   make a new folder holding **exactly one file** and reference it by name when you
+   ask. Other strategies can sit beside `handshake/` later.
 
 4. **Start Claude in this folder** and just ask. For example:
    > Create a shipment and send a service request for `ltl_pickup_origin` to

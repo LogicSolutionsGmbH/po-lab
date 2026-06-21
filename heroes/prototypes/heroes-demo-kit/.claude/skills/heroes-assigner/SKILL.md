@@ -34,7 +34,7 @@ Example — request `ltl_pickup_origin` from tenant `schryver`, attaching the
 booking:
 
 ```bash
-npx tsx create-shipment.ts ./payloads/shipment-booking --target schryver \
+npx tsx create-shipment.ts ./payloads/handshake/request-service --target schryver \
     --service-key ltl_pickup_origin
 ```
 

@@ -40,7 +40,7 @@ optional payload folder attaches a confirmation document. Example:
 
 ```bash
 npx tsx accept-strategy.ts <serviceId> --provider-ref PROV-12345 \
-    ./payloads/accept-handshake
+    ./payloads/handshake/accept
 ```
 
 ## Reject a request

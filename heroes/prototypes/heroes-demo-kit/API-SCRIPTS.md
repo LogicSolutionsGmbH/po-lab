@@ -23,7 +23,7 @@ cp .env.example .env
 Run any script with `npx tsx` (npx fetches `tsx` on the fly — no install needed):
 
 ```bash
-npx tsx create-shipment.ts ./payloads/shipment-booking --target schryver
+npx tsx create-shipment.ts ./payloads/handshake/request-service --target schryver
 ```
 
 Or, if you'd rather install once: `npm install` then `npm run create-shipment -- ...`.
@@ -35,8 +35,8 @@ A "payload" is the document attached to an event. Each example folder holds
 from the extension. Small text files (≤ 8 KB) ride inline on the event; larger or
 binary files are uploaded as a multipart attachment automatically.
 
-- `payloads/shipment-booking/booking.json` — booking sent by the maker
-- `payloads/accept-handshake/confirmation.xml` — confirmation sent by the taker
+- `payloads/handshake/request-service/booking.json` — booking sent by the maker
+- `payloads/handshake/accept/confirmation.xml` — confirmation sent by the taker
 
 ## The handshake flow
 
@@ -65,7 +65,7 @@ maker                                   taker
 
 ```bash
 # 1. Maker creates the shipment and initiates the handshake
-npx tsx create-shipment.ts ./payloads/shipment-booking --target schryver \
+npx tsx create-shipment.ts ./payloads/handshake/request-service --target schryver \
     --service-key ltl_pickup_origin
 #   → prints journeyId, serviceId, eventId
 
@@ -74,7 +74,7 @@ npx tsx list-requests.ts --direction incoming
 
 # 3. Taker accepts (use the serviceId from step 1/2)
 npx tsx accept-strategy.ts <serviceId> --provider-ref PROV-12345 \
-    ./payloads/accept-handshake
+    ./payloads/handshake/accept
 
 # 4. Either side verifies the result
 npx tsx show-service.ts <serviceId> --role maker

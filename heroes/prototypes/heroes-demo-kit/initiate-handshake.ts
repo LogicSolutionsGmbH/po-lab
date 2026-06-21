@@ -10,7 +10,7 @@
  *       [<payload-folder>] [--name <eventName>] [--lo-code <UNLOCODE>]
  *
  * Example:
- *   npx tsx initiate-handshake.ts 550e8400-... --target schryver ./payloads/shipment-booking
+ *   npx tsx initiate-handshake.ts 550e8400-... --target schryver ./payloads/handshake/request-service
  */
 import {
   run,
