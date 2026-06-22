@@ -17,8 +17,12 @@ export type Role = 'maker' | 'taker';
 
 export interface Config {
   apiUrl: string;
-  makerApiKey?: string;
-  takerApiKey?: string;
+  /** Named tenant registry, built from `LH_KEY_<NAME>` env vars (name lowercased). */
+  keys: Record<string, string>;
+  /** Default role → tenant-name bindings, from the `MAKER` / `TAKER` env vars. */
+  bindings: { maker?: string; taker?: string };
+  /** Legacy direct keys (`MAKER_API_KEY` / `TAKER_API_KEY`), kept for back-compat. */
+  legacy: { maker?: string; taker?: string };
 }
 
 /** Minimal `.env` parser so we don't need the `dotenv` dependency. */
@@ -44,24 +48,73 @@ function loadDotEnv(): void {
 
 export function loadConfig(): Config {
   loadDotEnv();
+  const keys: Record<string, string> = {};
+  for (const [k, v] of Object.entries(process.env)) {
+    const m = /^LH_KEY_(.+)$/.exec(k);
+    if (m && v) keys[m[1].toLowerCase()] = v;
+  }
   return {
     apiUrl: (process.env.API_URL ?? 'http://localhost:3401/api').replace(/\/$/, ''),
-    makerApiKey: process.env.MAKER_API_KEY,
-    takerApiKey: process.env.TAKER_API_KEY,
+    keys,
+    bindings: {
+      maker: process.env.MAKER?.toLowerCase(),
+      taker: process.env.TAKER?.toLowerCase(),
+    },
+    legacy: {
+      maker: process.env.MAKER_API_KEY,
+      taker: process.env.TAKER_API_KEY,
+    },
   };
 }
 
-/** Resolve the API key for a role, with a friendly error if it's missing. */
-export function keyForRole(config: Config, role: Role): string {
-  const key = role === 'maker' ? config.makerApiKey : config.takerApiKey;
-  if (!key) {
-    const envName = role === 'maker' ? 'MAKER_API_KEY' : 'TAKER_API_KEY';
+/** Resolve a tenant name (from the registry) or a raw `lh_` key to an API key. */
+function resolveTenant(config: Config, nameOrKey: string | undefined): string | undefined {
+  if (!nameOrKey) return undefined;
+  if (nameOrKey.startsWith('lh_')) return nameOrKey; // a raw key passed directly
+  return config.keys[nameOrKey.toLowerCase()];
+}
+
+/**
+ * Resolve the API key for a role. First hit wins:
+ *   1. `--maker <name|key>` / `--taker <name|key>` flag on this command
+ *   2. `MAKER` / `TAKER` binding in `.env` (a tenant name in the `LH_KEY_*` registry)
+ *   3. legacy `MAKER_API_KEY` / `TAKER_API_KEY` direct key
+ *
+ * This lets you pick who plays each role per command without editing `.env`:
+ *   npx tsx create-shipment.ts ... --maker globex --taker acme
+ */
+export function keyForRole(
+  config: Config,
+  role: Role,
+  flags?: ParsedArgs['flags'],
+): string {
+  const known = Object.keys(config.keys);
+  const tenantHint = known.length
+    ? `Known tenants: ${known.join(', ')}.`
+    : `No LH_KEY_<NAME> entries found in your environment or .env.`;
+
+  // An explicit --maker/--taker flag must resolve — never silently fall back to
+  // the default binding, or a typo'd tenant would quietly act as the wrong one.
+  const fromFlag = flags ? flagString(flags, role) : undefined; // --maker / --taker
+  if (fromFlag !== undefined) {
+    const key = resolveTenant(config, fromFlag);
+    if (key) return key;
     throw new Error(
-      `Missing ${envName}. Set it in your environment or in a .env file ` +
-        `(see .env.example). The "${role}" role needs this key.`,
+      `--${role} "${fromFlag}" did not match any tenant. ${tenantHint}\n` +
+        `Pass a registry name or a raw lh_ key.`,
     );
   }
-  return key;
+
+  const key = resolveTenant(config, config.bindings[role]) ?? config.legacy[role];
+  if (key) return key;
+
+  throw new Error(
+    `No API key resolved for the "${role}" role. ${tenantHint}\n` +
+      `Set it one of these ways (see .env.example):\n` +
+      `  • pass --${role} <tenant-name|lh_key> on the command, or\n` +
+      `  • set ${role.toUpperCase()}=<tenant-name> in .env (with a matching LH_KEY_<NAME>), or\n` +
+      `  • set ${role.toUpperCase()}_API_KEY=<lh_key> in .env (legacy single-key mode).`,
+  );
 }
 
 // ---------------------------------------------------------------------------

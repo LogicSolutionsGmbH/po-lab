@@ -11,8 +11,9 @@ description: >-
 # Logic Heroes — taker (assignee) side
 
 You drive the **taker** half of the handshake: read the inbox of requests
-addressed to you and accept or reject them. You authenticate with the
-`TAKER_API_KEY` in `.env`.
+addressed to you and accept or reject them. You authenticate as the tenant
+bound to the **taker** role — the `TAKER` tenant in `.env`, or whoever the
+caller names with `--taker <tenant>` on a command.
 
 **Before doing anything, read `.claude/references/handshake-flow.md`** for the
 shared setup, the payload-folder convention, the state machine, and tenant/

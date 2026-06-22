@@ -24,10 +24,16 @@ folder — see **`API-SCRIPTS.md`** for the raw CLI.
    ```bash
    cp .env.example .env
    # edit .env:
-   #   API_URL        e.g. http://localhost:3401/api   (keep the /api suffix)
-   #   MAKER_API_KEY  the assigner's key
-   #   TAKER_API_KEY  the taker's key (may equal MAKER for a self-request demo)
+   #   API_URL          e.g. http://localhost:3401/api   (keep the /api suffix)
+   #   LH_KEY_<NAME>    one key per tenant (e.g. LH_KEY_ACME, LH_KEY_GLOBEX)
+   #   MAKER / TAKER    which tenant plays each role by default (a name above)
    ```
+   **Pick who's who per command.** The `MAKER`/`TAKER` lines set the defaults;
+   override either on any command with `--maker <name>` / `--taker <name>` to
+   reassign roles without editing `.env` (e.g. swap A↔B: `--maker globex
+   --taker acme`). A flag value can also be a raw `lh_` key. For a self-request
+   demo, point both at the same tenant. (The old single-key `MAKER_API_KEY` /
+   `TAKER_API_KEY` style still works as a fallback.)
 
 3. **Add a payload (optional).** A payload is the document attached to a request.
    Payloads are grouped by strategy. Two examples ship under `payloads/handshake/`

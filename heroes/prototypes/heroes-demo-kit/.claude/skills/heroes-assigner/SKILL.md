@@ -12,8 +12,9 @@ description: >-
 # Logic Heroes — assigner (maker) side
 
 You drive the **assigner** half of the handshake: create a shipment, open a
-service, and request it from a target tenant. You authenticate with the
-`MAKER_API_KEY` in `.env`.
+service, and request it from a target tenant. You authenticate as the tenant
+bound to the **maker** role — the `MAKER` tenant in `.env`, or whoever the
+caller names with `--maker <tenant>` on a command.
 
 **Before doing anything, read `.claude/references/handshake-flow.md`** for the
 shared setup, the payload-folder convention, the state machine, and tenant/

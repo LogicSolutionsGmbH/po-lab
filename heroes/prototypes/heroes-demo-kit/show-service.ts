@@ -22,7 +22,7 @@ run(async (config) => {
     throw new Error('Usage: npx tsx show-service.ts <serviceId> [--role maker|taker]');
   }
 
-  const apiKey = keyForRole(config, role);
+  const apiKey = keyForRole(config, role, flags);
 
   heading(`Strategy instances for ${serviceId}`);
   const data = await api<any>(config, {

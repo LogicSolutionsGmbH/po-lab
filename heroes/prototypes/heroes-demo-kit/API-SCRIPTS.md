@@ -10,15 +10,39 @@ build step and nothing to clone — copy this folder anywhere and run it.
 ## Requirements
 
 - **Node.js 18+** (uses built-in `fetch`, `FormData`, `Blob` — no dependencies).
-- Two API keys: a **maker** (assigner) and a **taker** (assignee). They can be
-  the same key if you want to demo a self-request.
+- One API key per tenant. A **maker** (assigner) and a **taker** (assignee) play
+  the two sides of a handshake; the same tenant can play both for a self-request.
 
 ## Setup
 
 ```bash
 cp .env.example .env
-# edit .env: set API_URL, MAKER_API_KEY, TAKER_API_KEY
+# edit .env:
+#   API_URL          the API base (keep the /api suffix)
+#   LH_KEY_<NAME>    one key per tenant, e.g. LH_KEY_ACME, LH_KEY_GLOBEX
+#   MAKER / TAKER    default role → tenant-name bindings
 ```
+
+### Choosing maker & taker
+
+Roles resolve in this order (first hit wins):
+
+1. `--maker <name|key>` / `--taker <name|key>` flag on the command
+2. `MAKER` / `TAKER` binding in `.env` (a tenant name from the `LH_KEY_*` registry)
+3. legacy `MAKER_API_KEY` / `TAKER_API_KEY` direct key (back-compat)
+
+So you set sensible defaults once, then reassign per command without editing `.env`:
+
+```bash
+# defaults: MAKER=acme TAKER=globex
+npx tsx create-shipment.ts ./payloads/handshake/request-service --target schryver
+# swap who plays each role for just this run:
+npx tsx create-shipment.ts ./payloads/handshake/request-service --target schryver \
+    --maker globex --taker acme
+```
+
+A flag naming an unknown tenant is a hard error (it never silently falls back to
+the default), so a typo can't quietly act as the wrong tenant.
 
 Run any script with `npx tsx` (npx fetches `tsx` on the fly — no install needed):
 

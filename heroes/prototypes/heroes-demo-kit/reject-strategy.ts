@@ -40,7 +40,7 @@ run(async (config) => {
     );
   }
 
-  const apiKey = keyForRole(config, 'taker');
+  const apiKey = keyForRole(config, 'taker', flags);
 
   // A folder takes precedence; otherwise a --reason becomes an inline text payload.
   let payload: Payload | undefined;

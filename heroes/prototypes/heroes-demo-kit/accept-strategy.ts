@@ -39,7 +39,7 @@ run(async (config) => {
     );
   }
 
-  const apiKey = keyForRole(config, 'taker');
+  const apiKey = keyForRole(config, 'taker', flags);
   const payload = folder ? readPayloadFolder(folder) : undefined;
 
   heading('Accepting handshake');

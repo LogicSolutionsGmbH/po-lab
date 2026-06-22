@@ -40,7 +40,7 @@ run(async (config) => {
     );
   }
 
-  const apiKey = keyForRole(config, 'maker');
+  const apiKey = keyForRole(config, 'maker', flags);
   const payload = readPayloadFolder(folder);
 
   heading('Creating shipment journey');

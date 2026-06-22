@@ -25,7 +25,7 @@ run(async (config) => {
 
   const defaultRole: Role = direction === 'outgoing' ? 'maker' : 'taker';
   const role = (flagString(flags, 'role') as Role | undefined) ?? defaultRole;
-  const apiKey = keyForRole(config, role);
+  const apiKey = keyForRole(config, role, flags);
 
   heading(`Service requests (${direction}, as ${role})`);
   const data = await api<any>(config, {

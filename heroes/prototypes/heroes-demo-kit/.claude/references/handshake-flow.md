@@ -26,10 +26,17 @@ assigner can `initiate-handshake` again toward the same or a different tenant.
 
 1. Credentials live in `.env` (copy from `.env.example`). All scripts read it:
    - `API_URL` — base URL, **includes the `/api` suffix** (e.g. `http://localhost:3401/api`).
-   - `MAKER_API_KEY` — the assigner's key (creates journeys/services, initiates).
-   - `TAKER_API_KEY` — the taker's key (accepts/rejects). May equal the maker key
-     for a self-request demo.
-2. No install step is required — every script runs with `npx tsx <script>.ts`
+   - `LH_KEY_<NAME>` — one API key per tenant; the `<NAME>` is that tenant's
+     handle (case-insensitive), e.g. `LH_KEY_ACME`, `LH_KEY_GLOBEX`.
+   - `MAKER` / `TAKER` — which tenant (a name above) plays each role by default.
+     Point both at the same tenant for a self-request demo.
+2. **Choosing who plays each role.** Resolution is: a `--maker <name>` /
+   `--taker <name>` flag on the command wins; else the `MAKER` / `TAKER` binding;
+   else legacy `MAKER_API_KEY` / `TAKER_API_KEY` direct keys. So you can reassign
+   roles per command (e.g. swap A↔B with `--maker globex --taker acme`) without
+   editing `.env`. A flag naming an unknown tenant errors rather than falling back.
+   When the user says "act as <tenant>", pass that tenant via the matching flag.
+3. No install step is required — every script runs with `npx tsx <script>.ts`
    (npx fetches `tsx` on the fly). `npm install` is optional.
 
 ## Payload convention
