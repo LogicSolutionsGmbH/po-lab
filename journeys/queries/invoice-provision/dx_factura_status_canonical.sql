@@ -20,6 +20,12 @@
  *   @cd_identityFacturaExtraida alternate selector
  *
  * Country-agnostic: FPRO tables resolved at runtime via spp_ObtieneTablaPorPais.
+ *
+ * COLLATION: this tenant DB's default is SQL_Latin1_General_CP1_CI_AS but data columns
+ * are Modern_Spanish_CI_AS. Temp-table string columns + the real columns they're compared
+ * against are both "implicit" collation, so a mismatch errors (Msg 468). We force both
+ * sides to COLLATE DATABASE_DEFAULT on each temp-vs-column comparison; equality on ASCII
+ * shipping refs/containers/MBL/MAWB is identical under either collation.
  * ============================================================================ */
 SET NOCOUNT ON;
 
@@ -104,31 +110,31 @@ CREATE TABLE #bk (cd_identityBooking BIGINT, method NVARCHAR(40) COLLATE DATABAS
 -- tx_referencia
 INSERT INTO #bk SELECT DISTINCT bpi.cd_identityBooking, 'tx_referencia'
 FROM dbo.TESch_BookingPartesInvolucradas bpi WITH (NOLOCK)
-WHERE bpi.tx_referencia IN (SELECT val FROM #sig) AND bpi.cd_identityBooking IS NOT NULL;
+WHERE bpi.tx_referencia COLLATE DATABASE_DEFAULT IN (SELECT val FROM #sig) AND bpi.cd_identityBooking IS NOT NULL;
 -- container / heroes service (uuid_servicio is uniqueidentifier -> only GUID-castable values)
 INSERT INTO #bk SELECT DISTINCT dc.cd_identityViaje, 'container/service'
 FROM dbo.TESch_DetalleCarga dc WITH (NOLOCK)
-WHERE (dc.nu_contenedor IN (SELECT val FROM #sig)
+WHERE (dc.nu_contenedor COLLATE DATABASE_DEFAULT IN (SELECT val FROM #sig)
        OR dc.uuid_servicio IN (SELECT TRY_CONVERT(uniqueidentifier, val) FROM #sig
                                WHERE TRY_CONVERT(uniqueidentifier, val) IS NOT NULL))
   AND dc.cd_identityViaje IS NOT NULL;
 -- MBL
 INSERT INTO #bk SELECT DISTINCT m.cd_identityBooking, 'MBL'
 FROM dbo.TESch_MBL m WITH (NOLOCK)
-WHERE m.cd_masterMBL IN (SELECT val FROM #sig) AND m.cd_identityBooking IS NOT NULL;
+WHERE m.cd_masterMBL COLLATE DATABASE_DEFAULT IN (SELECT val FROM #sig) AND m.cd_identityBooking IS NOT NULL;
 -- HBL
 INSERT INTO #bk SELECT DISTINCT m.cd_identityBooking, 'HBL'
 FROM dbo.TESch_BL m WITH (NOLOCK)
-WHERE m.cd_houseBL IN (SELECT val FROM #sig) AND m.cd_identityBooking IS NOT NULL;
+WHERE m.cd_houseBL COLLATE DATABASE_DEFAULT IN (SELECT val FROM #sig) AND m.cd_identityBooking IS NOT NULL;
 -- BL / carrier reservation
 INSERT INTO #bk SELECT DISTINCT tb.cd_identityBooking, 'BL/reserva'
 FROM dbo.TESch_TramoBooking tb WITH (NOLOCK)
-WHERE tb.tx_reservaTransportador IN (SELECT val FROM #sig) AND tb.cd_identityBooking IS NOT NULL;
+WHERE tb.tx_reservaTransportador COLLATE DATABASE_DEFAULT IN (SELECT val FROM #sig) AND tb.cd_identityBooking IS NOT NULL;
 -- MAWB (normalized: strip dashes/spaces both sides)
 INSERT INTO #bk SELECT DISTINCT h.cd_identityBooking, 'MAWB'
 FROM dbo.TESch_Mawb m WITH (NOLOCK)
 INNER JOIN dbo.TESch_Hawb h WITH (NOLOCK) ON h.cd_identityMawb = m.cd_identityMawb
-WHERE REPLACE(REPLACE(m.cd_mawb,'-',''),' ','')
+WHERE REPLACE(REPLACE(m.cd_mawb,'-',''),' ','') COLLATE DATABASE_DEFAULT
       IN (SELECT REPLACE(REPLACE(val,'-',''),' ','') FROM #sig)
   AND h.cd_identityBooking IS NOT NULL;
 
@@ -230,7 +236,7 @@ SELECT @bkText = STRING_AGG(
            '  ref ', ISNULL(ref,'(none)'), '  [via ', methods, ']'), @nl)
 FROM (
   SELECT b.cd_identityBooking, STRING_AGG(b.method, ', ') AS methods,
-         (SELECT TOP (1) r.tx_referencia FROM dbo.TESch_BookingPartesInvolucradas r
+         (SELECT TOP (1) r.tx_referencia COLLATE DATABASE_DEFAULT FROM dbo.TESch_BookingPartesInvolucradas r
           WHERE r.cd_identityBooking = b.cd_identityBooking
             AND NULLIF(LTRIM(RTRIM(r.tx_referencia)),'') IS NOT NULL
           ORDER BY r.cd_identityBookingPartesInvolucradas DESC) AS ref
