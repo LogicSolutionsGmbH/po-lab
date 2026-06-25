@@ -105,6 +105,17 @@ Near-identical `invoiceAlreadyExist` on both sides → `w2` / `j2`.
 > difference, or (b) a different `cd_identityPaisResponsable` feeding
 > `spp_ObtieneTablaPorPais` → different FPRO tables queried.
 
+> **Dynamic, not country-pinned.** The FPRO purchase-invoice tables are
+> country-specific and resolved at runtime: `spp_ObtieneTablaPorPais` returns a
+> suffix, then the code builds `TESch_Factura{suffix}` (detail + header) and
+> `cd_identityFactura{headerSuffix}` (FK) and interpolates them into the query.
+> `w2`/`j2` replay this with `sp_executesql` — fill in `@cd_identityPais` (worker)
+> or let `j2` derive it from `TESch_BookingCosto`, and the right tables are
+> selected automatically. **No country is hardcoded.** Same applies to every
+> ⏳ query below that touches an FPRO header/detail table
+> (`provision.purchase-invoice-fpro.data.ts`, `provision.matched-preview.data.ts`,
+> `invoice-already-exist.data.ts`).
+
 ---
 
 ## Full SELECT inventory (index — verify verbatim before running the ⏳ ones)

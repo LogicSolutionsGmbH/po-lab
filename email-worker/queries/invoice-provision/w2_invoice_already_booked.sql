@@ -1,54 +1,66 @@
-/* WORKER · STEP 3 · is this provision already invoiced in the legacy FPRO tables?
+/* WORKER · STEP 3 · is this provision already invoiced in the legacy FPRO tables?  (country-agnostic)
  * VERBATIM source: src/activities/check-invoice-existence-activities/invoice.already.booked.helper.ts
  *   - SP block: :63-73   - link query: :119-142   - vw merge: :158-163   - moneda: :172-176
- * Worker passes cd_identityPaisResponsable in; reports only the FIRST factura id found.
+ * The source resolves the FPRO detail/header table NAMES at runtime (spp_ObtieneTablaPorPais)
+ * and interpolates them into the query; tenant + booking-costo ids are bound parameters.
+ * This replays that faithfully via sp_executesql, so it works for ANY country (no hardcoded MX).
+ * Worker reports only the FIRST factura id found (see j2 for the journeys all-facturas variant).
  *
  * Params:
  *   @cd_identityPais   = provision's cd_identityPaisResponsable (from resolveProvision)
  *   @cd_identityTenant = TCSch_DatosRFC.cd_identityDatosRFC (directoryTenantId)
- *   @bookingCostoIds   = the TESch_BookingCosto ids being checked
+ *   #bc                = TESch_BookingCosto ids being checked
  */
+SET NOCOUNT ON;
+
 DECLARE @cd_identityPais   INT = NULL;   -- fill in
 DECLARE @cd_identityTenant INT = NULL;   -- fill in
-DECLARE @bookingCostoIds TABLE (id BIGINT PRIMARY KEY);
--- INSERT INTO @bookingCostoIds (id) VALUES (...);
 
-/* (1) Resolve country-specific table name SUFFIXES. detailTable = 'TESch_Factura'+TableName,
- *     headerTable likewise; fkColumn = 'cd_identity'+header(without 'TESch_'). */
-DECLARE @detailTableName NVARCHAR(50), @headerTableName NVARCHAR(50), @dummyDate NVARCHAR(50);
-EXEC [dbo].[spp_ObtieneTablaPorPais] @cd_identityPais=@cd_identityPais,
-  @dataType='tp_tablaFacturaCompraDetalle', @TableName=@detailTableName OUTPUT, @DateFieldName=@dummyDate OUTPUT;
-EXEC [dbo].[spp_ObtieneTablaPorPais] @cd_identityPais=@cd_identityPais,
-  @dataType='tp_tablaFacturaCompra',        @TableName=@headerTableName OUTPUT, @DateFieldName=@dummyDate OUTPUT;
-SELECT @detailTableName AS detailSuffix, @headerTableName AS headerSuffix;  -- e.g. FproDetalleMex / FproMex
+IF OBJECT_ID('tempdb..#bc') IS NOT NULL DROP TABLE #bc;
+CREATE TABLE #bc (id BIGINT PRIMARY KEY);
+-- INSERT INTO #bc (id) VALUES (...);  -- cd_identityBookingCosto list
 
-/* (2) Link query — VERBATIM shape (substitute the resolved table/column names from step 1).
- *     Example for Mexico: detail=TESch_FacturaFproDetalleMex, header=TESch_FacturaFproMex,
- *     fk=cd_identityFacturaFproMex. */
+/* (1) Resolve country-specific table-name suffixes (e.g. FproDetalleMex / FproMex, FproDetalleAle / FproAle, ...) */
+DECLARE @detailSuffix NVARCHAR(50), @headerSuffix NVARCHAR(50), @dummyDate NVARCHAR(50);
+EXEC [dbo].[spp_ObtieneTablaPorPais] @cd_identityPais=@cd_identityPais,
+  @dataType='tp_tablaFacturaCompraDetalle', @TableName=@detailSuffix OUTPUT, @DateFieldName=@dummyDate OUTPUT;
+EXEC [dbo].[spp_ObtieneTablaPorPais] @cd_identityPais=@cd_identityPais,
+  @dataType='tp_tablaFacturaCompra',        @TableName=@headerSuffix OUTPUT, @DateFieldName=@dummyDate OUTPUT;
+
+/* (2) Build identifiers exactly like the TS code:
+ *     detailTable = 'TESch_Factura'+detailSuffix ; headerTable = 'TESch_Factura'+headerSuffix
+ *     fkColumn    = 'cd_identityFactura'+headerSuffix  (== vw.cd_identityFactura) */
+DECLARE @detailTable SYSNAME = N'TESch_Factura'     + LTRIM(RTRIM(@detailSuffix));
+DECLARE @headerTable SYSNAME = N'TESch_Factura'     + LTRIM(RTRIM(@headerSuffix));
+DECLARE @fkColumn    SYSNAME = N'cd_identityFactura' + LTRIM(RTRIM(@headerSuffix));
+
+/* (3) Dynamic link query — names interpolated, tenant bound as a parameter (matches source) */
+DECLARE @sql NVARCHAR(MAX) = N'
 SELECT
   fd.cd_identityBookingCosto AS provision_id,
-  f.cd_identityFacturaFproMex AS cd_identityFactura,         -- f.{fkColumn}
+  f.' + QUOTENAME(@fkColumn) + N' AS cd_identityFactura,
   bpi.tx_referencia
-FROM dbo.TESch_FacturaFproDetalleMex fd WITH (NOLOCK)        -- dbo.{detailTable}
-INNER JOIN dbo.TESch_FacturaFproMex f WITH (NOLOCK)          -- dbo.{headerTable}
-  ON f.cd_identityFacturaFproMex = fd.cd_identityFacturaFproMex   -- f.{fk} = fd.{fk}
+FROM dbo.' + QUOTENAME(@detailTable) + N' fd WITH (NOLOCK)
+INNER JOIN dbo.' + QUOTENAME(@headerTable) + N' f WITH (NOLOCK)
+  ON f.' + QUOTENAME(@fkColumn) + N' = fd.' + QUOTENAME(@fkColumn) + N'
 INNER JOIN dbo.TESch_BookingPartesInvolucradas bpi WITH (NOLOCK)
   ON bpi.cd_identityBooking = fd.cd_identityBooking
  AND bpi.cd_identityDirectorio = (
-       SELECT cd_identityDirectorio
-       FROM dbo.TCSch_DatosRFC WITH (NOLOCK)
-       WHERE cd_identityDatosRFC = @cd_identityTenant
+       SELECT cd_identityDirectorio FROM dbo.TCSch_DatosRFC WITH (NOLOCK)
+       WHERE cd_identityDatosRFC = @p_tenant
      )
-WHERE fd.cd_identityBookingCosto IN (SELECT id FROM @bookingCostoIds)
-  AND fd.cd_identityTenant = @cd_identityTenant
-  AND f.st_cancelada <> 'S'
-  AND f.st_estatus = 'A';
+WHERE fd.cd_identityBookingCosto IN (SELECT id FROM #bc)
+  AND fd.cd_identityTenant = @p_tenant
+  AND f.st_cancelada <> ''S''
+  AND f.st_estatus = ''A'';';
 
-/* (3) Enrichment for the first cd_identityFactura found:
+EXEC sys.sp_executesql @sql, N'@p_tenant INT', @p_tenant = @cd_identityTenant;
+
+/* (4) Enrichment for the FIRST cd_identityFactura found (worker takes distinctFacturaIds[0]):
  *   SELECT * FROM dbo.vw_FacturaMultiTenantGlobal
  *   WHERE cd_identityFactura = @firstFacturaId AND cd_identityTenant = @cd_identityTenant;
  *   SELECT cd_identityMoneda, tx_acronimoMoneda FROM dbo.TCSch_Moneda WHERE cd_identityMoneda IN (...);
  *
- * Decision: matchProvision() normalizes both invoice numbers to digits-only and compares.
+ * Decision: matchProvision() compares invoice numbers digits-only.
  *   match -> tag st_estatus = 1 (booked) ; no match -> st_estatus = 0 (matched).
  */
