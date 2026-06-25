@@ -14,7 +14,7 @@ Temporal.io workers for multi-tenant email processing — IMAP fetch, MSSQL meta
 ## Context
 
 - **Branch:** `main`
-- **Commit:** `1317df8` (2026-03-03)
+- **Commit:** `071a33f` (2026-06-24) — PR #22 merge, feature/new-tables
 
 ## Pull / refresh context
 

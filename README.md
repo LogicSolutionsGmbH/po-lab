@@ -44,8 +44,8 @@ refresh any substrate's `source/`.
 | Substrate | Repo | Status |
 |-----------|------|--------|
 | `database` | [Logic-Solutions-GmbH/databases](https://github.com/Logic-Solutions-GmbH/databases) | `source/` pulled (empty repo — ready for artifacts) |
-| `journeys` | [Logic-Solutions-GmbH/logic-journeys](https://github.com/Logic-Solutions-GmbH/logic-journeys) | scaffolded; `source/` @ `main` `25376b6` |
-| `email-worker` | [Logic-Solutions-GmbH/logic-email-worker](https://github.com/Logic-Solutions-GmbH/logic-email-worker) | scaffolded; `source/` @ `main` `1317df8` |
+| `journeys` | [Logic-Solutions-GmbH/logic-journeys](https://github.com/Logic-Solutions-GmbH/logic-journeys) | `source/` pulled @ `main` `f7e50a4` (2026-06-24) |
+| `email-worker` | [Logic-Solutions-GmbH/logic-email-worker](https://github.com/Logic-Solutions-GmbH/logic-email-worker) | `source/` pulled @ `main` `071a33f` (2026-06-24) |
 | `core-node` | [Logic-Solutions-GmbH/logic-core-node](https://github.com/Logic-Solutions-GmbH/logic-core-node) | scaffolded; `source/` @ `main` `5d91940` |
 | `schryver-mvc` | [Logic-Solutions-GmbH/logic-schryverMvc](https://github.com/Logic-Solutions-GmbH/logic-schryverMvc) | scaffolded; `source/` @ `master` `fbe1cb598` |
 | `heroes` | [Logic-Solutions-GmbH/logic-heroes](https://github.com/Logic-Solutions-GmbH/logic-heroes) | scaffolded; `source/` @ `main` `fc98d87`; credential-store research + cross-exam in `notes/` |
