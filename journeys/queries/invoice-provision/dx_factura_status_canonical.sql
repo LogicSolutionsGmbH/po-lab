@@ -1,19 +1,17 @@
 /* ============================================================================
- * CANONICAL DIAGNOSTIC · "what happened to this factura extraída?"
+ * CANONICAL DIAGNOSTIC · "what happened to this factura extraída?"  (TEXT REPORT)
  * ----------------------------------------------------------------------------
- * COMPOSED query (NOT a verbatim app query) — but every join/column/status code
- * below is taken from verified app sources:
- *   - status semantics .......... invoices.provision-state.ts:7-12
- *   - booking-cost/ctx block .... provision.matched-preview.data.ts:185-269
- *   - booked-invoice (FPRO) ..... invoice-already-exist.data.ts / invoice.already.booked.helper.ts
- *   - candidate/extraída fields .. fetch.unprocessed.invoices.ts, invoices.service.ts FACTURA_LIST_SELECT
+ * COMPOSED query (NOT a verbatim app query) — every join/column/status code is
+ * taken from verified worker + journeys sources:
+ *   - extraction JSON keys ........ tag.provision.with.invoice.workflow.ts:30-53
+ *   - booking resolution (6x, full  resolve.booking.from.extracted.data.helper.ts
+ *     cross-lookup union) ..........   :70-204  (every signal tried vs every resolver)
+ *   - status semantics ............ invoices.provision-state.ts:7-12
+ *   - booking-cost / context ...... provision.matched-preview.data.ts:185-269
+ *   - booked-invoice (FPRO) ....... invoice-already-exist.data.ts / invoice.already.booked.helper.ts
  *
- * GOAL: from a small set of front-end params, return ONE row per provision link
- * telling you, for that factura extraída:
- *   - estado: pending / unmatched / matched / booked
- *   - if booked -> which legacy invoice (cd_identityFactura, nu_factura, date, by-user)
- *   - full context: shipment reference, booking, booking-cost amount, concepto,
- *     currency, vendor, responsible country.
+ * Emits ONE text message (many bookings/provisions read better as prose than a grid).
+ * Tip: SSMS "Results to Text" (Ctrl+T) renders the newlines. Requires STRING_AGG (SQL2017+).
  *
  * INPUTS (set @cd_identityTenant + ONE selector; document name is the best case):
  *   @cd_identityTenant       REQUIRED
@@ -21,15 +19,17 @@
  *   @cd_identityBookingCosto alternate selector
  *   @cd_identityFacturaExtraida alternate selector
  *
- * Country-agnostic: the legacy FPRO tables are resolved at runtime via
- * spp_ObtieneTablaPorPais (no hardcoded country), same as w2/j2.
+ * Country-agnostic: FPRO tables resolved at runtime via spp_ObtieneTablaPorPais.
  * ============================================================================ */
 SET NOCOUNT ON;
 
-DECLARE @cd_identityTenant          INT          = NULL;   -- REQUIRED
+DECLARE @cd_identityTenant          INT           = NULL;  -- REQUIRED
 DECLARE @documentName               NVARCHAR(400) = NULL;  -- preferred selector
-DECLARE @cd_identityBookingCosto    BIGINT       = NULL;   -- alt selector
-DECLARE @cd_identityFacturaExtraida BIGINT       = NULL;   -- alt selector
+DECLARE @cd_identityBookingCosto    BIGINT        = NULL;  -- alt selector
+DECLARE @cd_identityFacturaExtraida BIGINT        = NULL;  -- alt selector
+
+DECLARE @nl NCHAR(2) = NCHAR(13) + NCHAR(10);
+DECLARE @report NVARCHAR(MAX) = N'';
 
 /* ---- (A) Resolve the target factura extraída from whichever selector was given ---- */
 IF @cd_identityFacturaExtraida IS NULL AND @documentName IS NOT NULL
@@ -37,8 +37,8 @@ IF @cd_identityFacturaExtraida IS NULL AND @documentName IS NOT NULL
   FROM dbo.TESch_FacturaExtraida f
   INNER JOIN dbo.TESch_ActivoDigital a ON a.cd_identityActivoDigital = f.cd_identityActivoDigital
   WHERE f.cd_identityTenant = @cd_identityTenant
-    AND a.tx_nombreArchivo = @documentName       -- exact; use LIKE @documentName+'%' if needed
-  ORDER BY f.fh_creacion DESC;                    -- doc names can repeat -> newest wins
+    AND a.tx_nombreArchivo = @documentName        -- exact; use LIKE @documentName+'%' if needed
+  ORDER BY f.fh_creacion DESC;                     -- doc names can repeat -> newest wins
 
 IF @cd_identityFacturaExtraida IS NULL AND @cd_identityBookingCosto IS NOT NULL
   SELECT TOP (1) @cd_identityFacturaExtraida = fec.cd_identityFacturaExtraida
@@ -50,133 +50,229 @@ IF @cd_identityFacturaExtraida IS NULL AND @cd_identityBookingCosto IS NOT NULL
 IF @cd_identityFacturaExtraida IS NULL
   THROW 50010, 'No factura extraída resolved for the given tenant + selector.', 1;
 
-/* ---- (B) Resolve responsible country from this factura's provisions (for the FPRO tables).
- *          NULL when the invoice is unmatched/pending -> no booked-invoice join needed. ---- */
-DECLARE @cd_identityPais INT = NULL;
-SELECT @cd_identityPais = MIN(bc.cd_identityPaisResponsable)
+/* ---- (B) Header fields ---- */
+DECLARE @docName NVARCHAR(400), @invNo NVARCHAR(200), @invDate DATETIME,
+        @taxId NVARCHAR(100), @cur NVARCHAR(20),
+        @sub DECIMAL(18,2), @imp DECIMAL(18,2), @tot DECIMAL(18,2),
+        @extrStatus NVARCHAR(50), @json NVARCHAR(MAX), @ctryCode NVARCHAR(20);
+SELECT
+  @docName    = a.tx_nombreArchivo,
+  @invNo      = cls.tx_numeroReferenciaDocumento,
+  @invDate    = cls.fh_emision,
+  @taxId      = f.tx_identificacionFiscalProveedor,
+  @cur        = f.tx_moneda,
+  @sub        = f.im_subtotal,
+  @imp        = f.im_impuestoTotal,
+  @tot        = f.im_total,
+  @extrStatus = f.st_estatusExtraccion,
+  @json       = f.tx_datosExtraccionCompletos
+FROM dbo.TESch_FacturaExtraida f
+INNER JOIN dbo.TESch_ActivoDigital a ON a.cd_identityActivoDigital = f.cd_identityActivoDigital
+OUTER APPLY (
+  SELECT TOP (1) c.tx_numeroReferenciaDocumento, c.fh_emision
+  FROM dbo.TESch_ClasificacionActivoDigital c
+  WHERE c.cd_identityActivoDigital = f.cd_identityActivoDigital
+  ORDER BY c.cd_identityClasificacionActivoDigital DESC
+) cls
+WHERE f.cd_identityFacturaExtraida = @cd_identityFacturaExtraida;
+
+IF @json IS NOT NULL AND ISJSON(@json) = 1
+  SET @ctryCode = JSON_VALUE(@json, '$.country_code');
+
+/* ---- (C) Parse the extracted reference signals (worker reads these JSON arrays) ---- */
+CREATE TABLE #sig (sig_type NVARCHAR(40), val NVARCHAR(400));
+IF @json IS NOT NULL AND ISJSON(@json) = 1
+  INSERT INTO #sig (sig_type, val)
+  SELECT s.sig_type, LTRIM(RTRIM(j.value))
+  FROM (VALUES
+    ('shipment_reference','$.shipment_reference'),
+    ('container_numbers','$.container_numbers'),
+    ('heroes_service_id','$.heroes_service_id'),
+    ('mbl','$.mbl'), ('hbl','$.hbl'), ('bl','$.bl'), ('mawb','$.mawb')
+  ) AS s(sig_type, path)
+  CROSS APPLY OPENJSON(@json, s.path) j
+  WHERE j.value IS NOT NULL AND LTRIM(RTRIM(j.value)) <> '';
+
+/* ---- (D) Resolve cd_identityBooking from the references — full cross-lookup union.
+ *          The worker tries every signal value against ALL 6 resolvers, so we pool all
+ *          distinct values and run each resolver over the pool (identical union). ---- */
+CREATE TABLE #bk (cd_identityBooking BIGINT, method NVARCHAR(40));
+
+-- tx_referencia
+INSERT INTO #bk SELECT DISTINCT bpi.cd_identityBooking, 'tx_referencia'
+FROM dbo.TESch_BookingPartesInvolucradas bpi WITH (NOLOCK)
+WHERE bpi.tx_referencia IN (SELECT val FROM #sig) AND bpi.cd_identityBooking IS NOT NULL;
+-- container / heroes service (uuid_servicio is uniqueidentifier -> only GUID-castable values)
+INSERT INTO #bk SELECT DISTINCT dc.cd_identityViaje, 'container/service'
+FROM dbo.TESch_DetalleCarga dc WITH (NOLOCK)
+WHERE (dc.nu_contenedor IN (SELECT val FROM #sig)
+       OR dc.uuid_servicio IN (SELECT TRY_CONVERT(uniqueidentifier, val) FROM #sig
+                               WHERE TRY_CONVERT(uniqueidentifier, val) IS NOT NULL))
+  AND dc.cd_identityViaje IS NOT NULL;
+-- MBL
+INSERT INTO #bk SELECT DISTINCT m.cd_identityBooking, 'MBL'
+FROM dbo.TESch_MBL m WITH (NOLOCK)
+WHERE m.cd_masterMBL IN (SELECT val FROM #sig) AND m.cd_identityBooking IS NOT NULL;
+-- HBL
+INSERT INTO #bk SELECT DISTINCT m.cd_identityBooking, 'HBL'
+FROM dbo.TESch_BL m WITH (NOLOCK)
+WHERE m.cd_houseBL IN (SELECT val FROM #sig) AND m.cd_identityBooking IS NOT NULL;
+-- BL / carrier reservation
+INSERT INTO #bk SELECT DISTINCT tb.cd_identityBooking, 'BL/reserva'
+FROM dbo.TESch_TramoBooking tb WITH (NOLOCK)
+WHERE tb.tx_reservaTransportador IN (SELECT val FROM #sig) AND tb.cd_identityBooking IS NOT NULL;
+-- MAWB (normalized: strip dashes/spaces both sides)
+INSERT INTO #bk SELECT DISTINCT h.cd_identityBooking, 'MAWB'
+FROM dbo.TESch_Mawb m WITH (NOLOCK)
+INNER JOIN dbo.TESch_Hawb h WITH (NOLOCK) ON h.cd_identityMawb = m.cd_identityMawb
+WHERE REPLACE(REPLACE(m.cd_mawb,'-',''),' ','')
+      IN (SELECT REPLACE(REPLACE(val,'-',''),' ','') FROM #sig)
+  AND h.cd_identityBooking IS NOT NULL;
+
+/* ---- (E) Provision / contabilizada state (matched-preview parity; LEFT so all states show) ---- */
+CREATE TABLE #prov (
+  booking_cost_id BIGINT NULL, booking_id BIGINT NULL, amount DECIMAL(18,2) NULL,
+  currency NVARCHAR(20) NULL, concepto NVARCHAR(400) NULL, vendor_name NVARCHAR(300) NULL,
+  vendor_directory_id BIGINT NULL, shipment_ref NVARCHAR(200) NULL,
+  responsible_country_id INT NULL, st_estatus INT NULL, estado NVARCHAR(40) NULL,
+  booked_factura BIGINT NULL, booked_nu NVARCHAR(100) NULL, booked_issue DATETIME NULL,
+  booked_user_id INT NULL, booked_user_name NVARCHAR(200) NULL
+);
+INSERT INTO #prov (booking_cost_id, booking_id, amount, currency, concepto, vendor_name,
+  vendor_directory_id, shipment_ref, responsible_country_id, st_estatus, estado)
+SELECT
+  bc.cd_identityBookingCosto, bc.cd_identityBooking, bc.im_importe, bc.tx_acronimoMoneda,
+  COALESCE(NULLIF(LTRIM(RTRIM(cf.nb_conceptoFactura)), ''), bc.tx_conceptoCosto),
+  dir.nb_nombreDirectorio, bc.cd_identityDirectorio, bpi.tx_referencia,
+  bc.cd_identityPaisResponsable, fec.st_estatus,
+  CASE
+    WHEN fec.cd_identityBookingCosto IS NULL THEN 'unmatched'
+    WHEN fec.st_estatus = 1 THEN 'booked'
+    WHEN fec.st_estatus = 0 THEN 'matched'
+    ELSE 'unknown'
+  END
 FROM dbo.TESch_FacturaExtraidaContabilizada fec
-INNER JOIN dbo.TESch_BookingCosto bc
-  ON bc.cd_identityBookingCosto = fec.cd_identityBookingCosto
- AND bc.cd_identityTenant = @cd_identityTenant
-WHERE fec.cd_identityFacturaExtraida = @cd_identityFacturaExtraida
-  AND fec.cd_identityBookingCosto IS NOT NULL
-  AND bc.cd_identityPaisResponsable IS NOT NULL;
--- Note: if provisions span >1 country, MIN picks one (app handles one country at a time).
+LEFT JOIN dbo.TESch_BookingCosto bc
+  ON bc.cd_identityBookingCosto = fec.cd_identityBookingCosto AND bc.cd_identityTenant = @cd_identityTenant
+LEFT JOIN dbo.TCSch_ConceptoFactura cf
+  ON cf.cd_identityConceptoFactura = bc.cd_identityConceptoFactura AND cf.cd_identityTenant = @cd_identityTenant
+LEFT JOIN dbo.TCSch_Directorio dir ON dir.cd_identityDirectorio = bc.cd_identityDirectorio
+OUTER APPLY (
+  SELECT TOP (1) ref.tx_referencia FROM dbo.TESch_BookingPartesInvolucradas ref
+  WHERE ref.cd_identityBooking = bc.cd_identityBooking
+    AND NULLIF(LTRIM(RTRIM(ref.tx_referencia)), '') IS NOT NULL
+  ORDER BY ref.cd_identityBookingPartesInvolucradas DESC
+) bpi
+WHERE fec.cd_identityFacturaExtraida = @cd_identityFacturaExtraida;
 
-/* ---- (C) Build the dynamic FPRO column list + joins (only when a country exists) ---- */
-DECLARE @fproCols NVARCHAR(MAX) = N'
-      CAST(NULL AS BIGINT)        AS booked_cd_identityFactura,
-      CAST(NULL AS NVARCHAR(100)) AS booked_nu_factura,
-      CAST(NULL AS DATETIME)      AS booked_issue_date,
-      CAST(NULL AS INT)           AS booked_by_user_id,
-      CAST(NULL AS NVARCHAR(200)) AS booked_by_user_name';
-DECLARE @fproJoin NVARCHAR(MAX) = N'';
-
+/* ---- (F) For booked provisions, resolve the legacy invoice (dynamic FPRO, single country) ---- */
+DECLARE @cd_identityPais INT = (SELECT MIN(responsible_country_id) FROM #prov WHERE booking_cost_id IS NOT NULL);
 IF @cd_identityPais IS NOT NULL
 BEGIN
-  DECLARE @detailSuffix NVARCHAR(50), @headerSuffix NVARCHAR(50), @dummyDate NVARCHAR(50);
+  DECLARE @detailSuffix NVARCHAR(50), @headerSuffix NVARCHAR(50), @dd NVARCHAR(50);
   EXEC [dbo].[spp_ObtieneTablaPorPais] @cd_identityPais=@cd_identityPais,
-    @dataType='tp_tablaFacturaCompraDetalle', @TableName=@detailSuffix OUTPUT, @DateFieldName=@dummyDate OUTPUT;
+    @dataType='tp_tablaFacturaCompraDetalle', @TableName=@detailSuffix OUTPUT, @DateFieldName=@dd OUTPUT;
   EXEC [dbo].[spp_ObtieneTablaPorPais] @cd_identityPais=@cd_identityPais,
-    @dataType='tp_tablaFacturaCompra',        @TableName=@headerSuffix OUTPUT, @DateFieldName=@dummyDate OUTPUT;
-
+    @dataType='tp_tablaFacturaCompra',        @TableName=@headerSuffix OUTPUT, @DateFieldName=@dd OUTPUT;
   DECLARE @detailTable SYSNAME = N'TESch_Factura'      + LTRIM(RTRIM(@detailSuffix));
   DECLARE @headerTable SYSNAME = N'TESch_Factura'      + LTRIM(RTRIM(@headerSuffix));
   DECLARE @fkColumn    SYSNAME = N'cd_identityFactura' + LTRIM(RTRIM(@headerSuffix));
 
-  SET @fproCols = N'
-      vw.cd_identityFactura  AS booked_cd_identityFactura,
-      vw.nu_factura          AS booked_nu_factura,
-      vw.fh_fechaEmision     AS booked_issue_date,
-      hf.cd_identityUsuario  AS booked_by_user_id,
-      bu.nb_nombre           AS booked_by_user_name';
-
-  SET @fproJoin = N'
-    LEFT JOIN dbo.' + QUOTENAME(@detailTable) + N' fd WITH (NOLOCK)
-      ON fd.cd_identityBookingCosto = bc.cd_identityBookingCosto
-     AND fd.cd_identityTenant = @p_tenant
-    LEFT JOIN dbo.' + QUOTENAME(@headerTable) + N' hf WITH (NOLOCK)
+  DECLARE @u NVARCHAR(MAX) = N'
+    UPDATE p SET
+      p.booked_factura   = vw.cd_identityFactura,
+      p.booked_nu        = vw.nu_factura,
+      p.booked_issue     = vw.fh_fechaEmision,
+      p.booked_user_id   = hf.cd_identityUsuario,
+      p.booked_user_name = bu.nb_nombre
+    FROM #prov p
+    INNER JOIN dbo.' + QUOTENAME(@detailTable) + N' fd WITH (NOLOCK)
+      ON fd.cd_identityBookingCosto = p.booking_cost_id AND fd.cd_identityTenant = @p_tenant
+    INNER JOIN dbo.' + QUOTENAME(@headerTable) + N' hf WITH (NOLOCK)
       ON hf.' + QUOTENAME(@fkColumn) + N' = fd.' + QUOTENAME(@fkColumn) + N'
      AND hf.st_cancelada <> ''S'' AND hf.st_estatus = ''A''
-    LEFT JOIN dbo.vw_FacturaMultiTenantGlobal vw
-      ON vw.cd_identityFactura = hf.' + QUOTENAME(@fkColumn) + N'
-     AND vw.cd_identityTenant = @p_tenant
-    LEFT JOIN dbo.TCSch_Usuario bu ON bu.cd_identityUsuario = hf.cd_identityUsuario';
+    INNER JOIN dbo.vw_FacturaMultiTenantGlobal vw
+      ON vw.cd_identityFactura = hf.' + QUOTENAME(@fkColumn) + N' AND vw.cd_identityTenant = @p_tenant
+    LEFT JOIN dbo.TCSch_Usuario bu ON bu.cd_identityUsuario = hf.cd_identityUsuario
+    WHERE p.booking_cost_id IS NOT NULL;';
+  EXEC sys.sp_executesql @u, N'@p_tenant INT', @p_tenant = @cd_identityTenant;
 END
 
-/* ---- (D) The one canonical row-per-provision SELECT ---- */
-DECLARE @sql NVARCHAR(MAX) = N'
-SELECT
-  f0.cd_identityFacturaExtraida,
-  f0.cd_identityTenant,
-  a.tx_nombreArchivo                 AS document_name,
-  a.tx_rutaS3                        AS document_s3,
-  cls.tx_numeroReferenciaDocumento   AS invoice_number,
-  cls.fh_emision                     AS invoice_issue_date,
-  f0.tx_identificacionFiscalProveedor AS vendor_tax_id,
-  f0.tx_moneda                       AS extracted_currency,
-  f0.im_subtotal, f0.im_impuestoTotal, f0.im_total,
-  /* ---- estado (invoices.provision-state.ts) ---- */
+/* ---- (G) Build the text report ---- */
+-- header
+SET @report =
+  N'=== FACTURA EXTRAÍDA #' + CAST(@cd_identityFacturaExtraida AS NVARCHAR(20))
+  + N' (tenant ' + CAST(@cd_identityTenant AS NVARCHAR(20)) + N') ===' + @nl
+  + N'Document:   ' + ISNULL(@docName,'(none)') + @nl
+  + N'Invoice no: ' + ISNULL(@invNo,'(none)')
+  + N'   Issued: ' + ISNULL(CONVERT(NVARCHAR(10), @invDate, 23), '(none)') + @nl
+  + N'Vendor tax: ' + ISNULL(@taxId,'(none)')
+  + N'   Amounts: ' + ISNULL(CONVERT(NVARCHAR(20),@sub),'?') + N' / ' + ISNULL(CONVERT(NVARCHAR(20),@imp),'?')
+  + N' / ' + ISNULL(CONVERT(NVARCHAR(20),@tot),'?') + N' ' + ISNULL(@cur,'') + @nl
+  + N'Extraction: ' + ISNULL(@extrStatus,'(none)')
+  + N'   country_code: ' + ISNULL(@ctryCode,'(none)') + @nl;
+
+-- references
+DECLARE @refsText NVARCHAR(MAX);
+SELECT @refsText = STRING_AGG(CONCAT('  ', sig_type, ': ', vals), @nl)
+FROM (SELECT sig_type, STRING_AGG(val, ', ') AS vals FROM #sig GROUP BY sig_type) t;
+SET @report += @nl + N'--- EXTRACTED REFERENCES ---' + @nl
+  + ISNULL(@refsText, N'  (none extracted)') + @nl;
+
+-- bookings resolved
+DECLARE @bkText NVARCHAR(MAX), @bkCount INT = (SELECT COUNT(DISTINCT cd_identityBooking) FROM #bk);
+SELECT @bkText = STRING_AGG(
+    CONCAT('  booking ', CAST(cd_identityBooking AS NVARCHAR(20)),
+           '  ref ', ISNULL(ref,'(none)'), '  [via ', methods, ']'), @nl)
+FROM (
+  SELECT b.cd_identityBooking, STRING_AGG(b.method, ', ') AS methods,
+         (SELECT TOP (1) r.tx_referencia FROM dbo.TESch_BookingPartesInvolucradas r
+          WHERE r.cd_identityBooking = b.cd_identityBooking
+            AND NULLIF(LTRIM(RTRIM(r.tx_referencia)),'') IS NOT NULL
+          ORDER BY r.cd_identityBookingPartesInvolucradas DESC) AS ref
+  FROM (SELECT DISTINCT cd_identityBooking, method FROM #bk) b
+  GROUP BY b.cd_identityBooking
+) g;
+SET @report += @nl + N'--- BOOKINGS RESOLVED FROM REFERENCES (worker resolveBooking, full cross-lookup) ---' + @nl
+  + N'  ' + CAST(@bkCount AS NVARCHAR(10)) + N' booking(s) found' + @nl
+  + ISNULL(@bkText, N'  (no bookings matched the extracted references)') + @nl;
+
+-- provisions / estado
+DECLARE @provCount INT = (SELECT COUNT(*) FROM #prov);
+DECLARE @overall NVARCHAR(40) =
   CASE
-    WHEN fec.cd_identityFacturaExtraidaContabilizada IS NULL THEN ''pending (worker not run)''
-    WHEN fec.cd_identityBookingCosto IS NULL                 THEN ''unmatched (unresolved)''
-    WHEN fec.st_estatus = 1                                  THEN ''booked''
-    WHEN fec.st_estatus = 0                                  THEN ''matched''
-    ELSE ''unknown''
-  END                                AS estado,
-  fec.st_estatus                     AS contabilizada_st_estatus,
-  fec.cd_identityFacturaExtraidaContabilizada AS contabilizada_id,
-  /* ---- provision / booking-cost context (matched-preview parity) ---- */
-  bc.cd_identityBookingCosto         AS booking_cost_id,
-  bc.cd_identityBooking              AS booking_id,
-  bpi.tx_referencia                  AS shipment_reference,
-  bc.cd_identityDirectorio           AS vendor_directory_id,
-  dir.nb_nombreDirectorio            AS vendor_name,
-  COALESCE(NULLIF(LTRIM(RTRIM(cf.nb_conceptoFactura)), ''''), bc.tx_conceptoCosto) AS concepto,
-  bc.im_importe                      AS provision_amount,
-  bc.tx_acronimoMoneda               AS provision_currency,
-  pm.cd_identityMoneda               AS provision_currency_id,
-  bc.cd_identityPaisResponsable      AS responsible_country_id,
-  ISNULL(bc.st_estatus, ''A'')       AS booking_cost_st_estatus,
-  /* ---- if booked: which legacy invoice (dynamic FPRO) ---- */'
-  + @fproCols + N'
-FROM dbo.TESch_FacturaExtraida f0
-INNER JOIN dbo.TESch_ActivoDigital a
-  ON a.cd_identityActivoDigital = f0.cd_identityActivoDigital
-LEFT JOIN dbo.TESch_ClasificacionActivoDigital cls
-  ON cls.cd_identityActivoDigital = f0.cd_identityActivoDigital
-LEFT JOIN dbo.TESch_FacturaExtraidaContabilizada fec
-  ON fec.cd_identityFacturaExtraida = f0.cd_identityFacturaExtraida
-LEFT JOIN dbo.TESch_BookingCosto bc
-  ON bc.cd_identityBookingCosto = fec.cd_identityBookingCosto
- AND bc.cd_identityTenant = @p_tenant
-LEFT JOIN dbo.TCSch_ConceptoFactura cf
-  ON cf.cd_identityConceptoFactura = bc.cd_identityConceptoFactura
- AND cf.cd_identityTenant = @p_tenant
-LEFT JOIN dbo.TCSch_Directorio dir
-  ON dir.cd_identityDirectorio = bc.cd_identityDirectorio
-LEFT JOIN dbo.TCSch_PaisMoneda pm
-  ON pm.cd_identityPaisMoneda = bc.cd_identityPaisMoneda
-OUTER APPLY (
-  SELECT TOP (1) ref.tx_referencia
-  FROM dbo.TESch_BookingPartesInvolucradas AS ref
-  WHERE ref.cd_identityBooking = bc.cd_identityBooking
-    AND NULLIF(LTRIM(RTRIM(ref.tx_referencia)), '''') IS NOT NULL
-  ORDER BY ref.cd_identityBookingPartesInvolucradas DESC
-) AS bpi'
-  + @fproJoin + N'
-WHERE f0.cd_identityFacturaExtraida = @p_factura
-ORDER BY bc.cd_identityBookingCosto;';
+    WHEN @provCount = 0 THEN 'PENDING (worker not run / no contabilizada row)'
+    WHEN EXISTS (SELECT 1 FROM #prov WHERE estado='booked')  THEN 'BOOKED'
+    WHEN EXISTS (SELECT 1 FROM #prov WHERE estado='matched') THEN 'MATCHED'
+    ELSE 'UNMATCHED (unresolved)'
+  END;
 
-EXEC sys.sp_executesql @sql,
-  N'@p_tenant INT, @p_factura BIGINT',
-  @p_tenant = @cd_identityTenant, @p_factura = @cd_identityFacturaExtraida;
+DECLARE @provText NVARCHAR(MAX);
+SELECT @provText = STRING_AGG(line, @nl) WITHIN GROUP (ORDER BY booking_cost_id) FROM (
+  SELECT booking_cost_id,
+    CONCAT(
+      '  [', UPPER(estado), '] provision ', ISNULL(CAST(booking_cost_id AS NVARCHAR(20)),'(none)'),
+      CASE WHEN booking_cost_id IS NULL THEN '' ELSE CONCAT(
+        ': ', ISNULL(CONVERT(NVARCHAR(20),amount),'?'), ' ', ISNULL(currency,''),
+        ', concepto "', ISNULL(concepto,'?'), '"',
+        ', booking ', ISNULL(CAST(booking_id AS NVARCHAR(20)),'?'),
+        ', shipment ', ISNULL(shipment_ref,'?'),
+        ', vendor "', ISNULL(vendor_name,'?'), '"') END,
+      CASE WHEN estado='booked' AND booked_factura IS NOT NULL
+        THEN CONCAT(@nl, '       -> BOOKED to legacy invoice cd_identityFactura ',
+                    CAST(booked_factura AS NVARCHAR(20)), ' (nu_factura ', ISNULL(booked_nu,'?'), ')',
+                    ', issued ', ISNULL(CONVERT(NVARCHAR(10),booked_issue,23),'?'),
+                    CASE WHEN booked_user_name IS NOT NULL THEN CONCAT(', by ', booked_user_name) ELSE '' END)
+        WHEN estado='booked' AND booked_factura IS NULL
+        THEN CONCAT(@nl, '       -> marked booked but no active legacy invoice row found (check country / st_cancelada)')
+        ELSE '' END
+    ) AS line
+  FROM #prov
+) x;
+SET @report += @nl + N'--- PROVISION / CONTABILIZADA STATE ---' + @nl
+  + N'  ESTADO: ' + @overall + @nl
+  + ISNULL(@provText, N'  (no provision rows)') + @nl;
 
-/* Reading the result:
- *   - 1 row, estado='pending'   -> worker never tagged it (no contabilizada row)
- *   - 1 row, estado='unmatched' -> worker ran but couldn't resolve a provision (booking_cost_id NULL)
- *   - N rows, estado='matched'  -> provisions found, not yet billed in legacy (booked_* NULL)
- *   - N rows, estado='booked'   -> billed in legacy; booked_cd_identityFactura / booked_nu_factura set
- *   booked_* columns are the legacy invoice it was booked to; shipment_reference / booking_id /
- *   provision_amount / provision_currency / vendor_name / concepto give the rest of the context.
- */
+SELECT @report AS report;
+
+DROP TABLE #sig; DROP TABLE #bk; DROP TABLE #prov;
