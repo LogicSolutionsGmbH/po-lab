@@ -80,7 +80,10 @@ IF @json IS NOT NULL AND ISJSON(@json) = 1
   SET @ctryCode = JSON_VALUE(@json, '$.country_code');
 
 /* ---- (C) Parse the extracted reference signals (worker reads these JSON arrays) ---- */
-CREATE TABLE #sig (sig_type NVARCHAR(40), val NVARCHAR(400));
+CREATE TABLE #sig (
+  sig_type NVARCHAR(40)  COLLATE DATABASE_DEFAULT,
+  val      NVARCHAR(400) COLLATE DATABASE_DEFAULT  -- match tenant DB collation (e.g. Modern_Spanish_CI_AS)
+);
 IF @json IS NOT NULL AND ISJSON(@json) = 1
   INSERT INTO #sig (sig_type, val)
   SELECT s.sig_type, LTRIM(RTRIM(j.value))
@@ -96,7 +99,7 @@ IF @json IS NOT NULL AND ISJSON(@json) = 1
 /* ---- (D) Resolve cd_identityBooking from the references — full cross-lookup union.
  *          The worker tries every signal value against ALL 6 resolvers, so we pool all
  *          distinct values and run each resolver over the pool (identical union). ---- */
-CREATE TABLE #bk (cd_identityBooking BIGINT, method NVARCHAR(40));
+CREATE TABLE #bk (cd_identityBooking BIGINT, method NVARCHAR(40) COLLATE DATABASE_DEFAULT);
 
 -- tx_referencia
 INSERT INTO #bk SELECT DISTINCT bpi.cd_identityBooking, 'tx_referencia'
@@ -132,11 +135,12 @@ WHERE REPLACE(REPLACE(m.cd_mawb,'-',''),' ','')
 /* ---- (E) Provision / contabilizada state (matched-preview parity; LEFT so all states show) ---- */
 CREATE TABLE #prov (
   booking_cost_id BIGINT NULL, booking_id BIGINT NULL, amount DECIMAL(18,2) NULL,
-  currency NVARCHAR(20) NULL, concepto NVARCHAR(400) NULL, vendor_name NVARCHAR(300) NULL,
-  vendor_directory_id BIGINT NULL, shipment_ref NVARCHAR(200) NULL,
-  responsible_country_id INT NULL, st_estatus INT NULL, estado NVARCHAR(40) NULL,
-  booked_factura BIGINT NULL, booked_nu NVARCHAR(100) NULL, booked_issue DATETIME NULL,
-  booked_user_id INT NULL, booked_user_name NVARCHAR(200) NULL
+  currency NVARCHAR(20) COLLATE DATABASE_DEFAULT NULL, concepto NVARCHAR(400) COLLATE DATABASE_DEFAULT NULL,
+  vendor_name NVARCHAR(300) COLLATE DATABASE_DEFAULT NULL,
+  vendor_directory_id BIGINT NULL, shipment_ref NVARCHAR(200) COLLATE DATABASE_DEFAULT NULL,
+  responsible_country_id INT NULL, st_estatus INT NULL, estado NVARCHAR(40) COLLATE DATABASE_DEFAULT NULL,
+  booked_factura BIGINT NULL, booked_nu NVARCHAR(100) COLLATE DATABASE_DEFAULT NULL, booked_issue DATETIME NULL,
+  booked_user_id INT NULL, booked_user_name NVARCHAR(200) COLLATE DATABASE_DEFAULT NULL
 );
 INSERT INTO #prov (booking_cost_id, booking_id, amount, currency, concepto, vendor_name,
   vendor_directory_id, shipment_ref, responsible_country_id, st_estatus, estado)
