@@ -42,6 +42,25 @@ running the journeys-side twins of the worker queries below.
 
 ---
 
+## Canonical diagnostic (start here)
+
+`journeys/queries/invoice-provision/dx_factura_status_canonical.sql` — one
+**composed** query (not a verbatim app query, but built from the verified joins
+below). Feed it `@cd_identityTenant` + a **document name**
+(`ActivoDigital.tx_nombreArchivo`) — or `@cd_identityBookingCosto` /
+`@cd_identityFacturaExtraida` as alternates — and it returns one row per
+provision link with:
+
+- **estado**: `pending` / `unmatched` / `matched` / `booked`
+- if **booked** → the legacy invoice it was booked to (`booked_cd_identityFactura`,
+  `booked_nu_factura`, issue date, booked-by user)
+- full context in the same row: shipment reference, booking, booking-cost amount,
+  concepto, currency, vendor, responsible country.
+
+Country-agnostic (resolves FPRO tables at runtime). Use it to validate a single
+invoice end-to-end; drop to the per-step queries below to see exactly which app
+query produced a given value.
+
 ## The flow, step by step
 
 ```
