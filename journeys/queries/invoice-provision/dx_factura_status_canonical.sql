@@ -86,6 +86,7 @@ IF @json IS NOT NULL AND ISJSON(@json) = 1
   SET @ctryCode = JSON_VALUE(@json, '$.country_code');
 
 /* ---- (C) Parse the extracted reference signals (worker reads these JSON arrays) ---- */
+IF OBJECT_ID('tempdb..#sig') IS NOT NULL DROP TABLE #sig;
 CREATE TABLE #sig (
   sig_type NVARCHAR(40)  COLLATE DATABASE_DEFAULT,
   val      NVARCHAR(400) COLLATE DATABASE_DEFAULT  -- match tenant DB collation (e.g. Modern_Spanish_CI_AS)
@@ -105,6 +106,7 @@ IF @json IS NOT NULL AND ISJSON(@json) = 1
 /* ---- (D) Resolve cd_identityBooking from the references — full cross-lookup union.
  *          The worker tries every signal value against ALL 6 resolvers, so we pool all
  *          distinct values and run each resolver over the pool (identical union). ---- */
+IF OBJECT_ID('tempdb..#bk') IS NOT NULL DROP TABLE #bk;
 CREATE TABLE #bk (cd_identityBooking BIGINT, method NVARCHAR(40) COLLATE DATABASE_DEFAULT);
 
 -- tx_referencia
@@ -139,6 +141,7 @@ WHERE REPLACE(REPLACE(m.cd_mawb,'-',''),' ','') COLLATE DATABASE_DEFAULT
   AND h.cd_identityBooking IS NOT NULL;
 
 /* ---- (E) Provision / contabilizada state (matched-preview parity; LEFT so all states show) ---- */
+IF OBJECT_ID('tempdb..#prov') IS NOT NULL DROP TABLE #prov;
 CREATE TABLE #prov (
   booking_cost_id BIGINT NULL, booking_id BIGINT NULL, amount DECIMAL(18,2) NULL,
   currency NVARCHAR(20) COLLATE DATABASE_DEFAULT NULL, concepto NVARCHAR(400) COLLATE DATABASE_DEFAULT NULL,
