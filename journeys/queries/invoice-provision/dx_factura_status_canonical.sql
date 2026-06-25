@@ -9,9 +9,10 @@
  *   - status semantics ............ invoices.provision-state.ts:7-12
  *   - booking-cost / context ...... provision.matched-preview.data.ts:185-269
  *   - booked-invoice (FPRO) ....... invoice-already-exist.data.ts / invoice.already.booked.helper.ts
+ *   - provision owner ............. factura.extraida.usuarios.helper.ts:34-47
  *
  * Emits ONE text message (many bookings/provisions read better as prose than a grid).
- * Tip: SSMS "Results to Text" (Ctrl+T) renders the newlines. Requires STRING_AGG (SQL2017+).
+ * Prints to the Messages tab in 4000-char chunks. Requires STRING_AGG (SQL2017+).
  *
  * INPUTS (set @cd_identityTenant + ONE selector; document name is the best case):
  *   @cd_identityTenant       REQUIRED
@@ -29,13 +30,17 @@
  * ============================================================================ */
 SET NOCOUNT ON;
 
-DECLARE @cd_identityTenant          INT           = NULL;  -- REQUIRED
+DECLARE @cd_identityTenant          INT           = 11;    -- REQUIRED
 DECLARE @documentName               NVARCHAR(400) = NULL;  -- preferred selector
 DECLARE @cd_identityBookingCosto    BIGINT        = NULL;  -- alt selector
-DECLARE @cd_identityFacturaExtraida BIGINT        = NULL;  -- alt selector
+DECLARE @cd_identityFacturaExtraida BIGINT        = 16136; -- alt selector
 
 DECLARE @nl NCHAR(2) = NCHAR(13) + NCHAR(10);
 DECLARE @report NVARCHAR(MAX) = N'';
+
+-- Tenant's own directory (used to pick the booking party / owner that belongs to the tenant).
+DECLARE @tenantDirectorio INT =
+  (SELECT cd_identityDirectorio FROM dbo.TCSch_DatosRFC WHERE cd_identityDatosRFC = @cd_identityTenant);
 
 /* ---- (A) Resolve the target factura extraída from whichever selector was given ---- */
 IF @cd_identityFacturaExtraida IS NULL AND @documentName IS NOT NULL
@@ -149,7 +154,8 @@ CREATE TABLE #prov (
   vendor_directory_id BIGINT NULL, shipment_ref NVARCHAR(200) COLLATE DATABASE_DEFAULT NULL,
   responsible_country_id INT NULL, st_estatus INT NULL, estado NVARCHAR(40) COLLATE DATABASE_DEFAULT NULL,
   booked_factura BIGINT NULL, booked_nu NVARCHAR(100) COLLATE DATABASE_DEFAULT NULL, booked_issue DATETIME NULL,
-  booked_user_id INT NULL, booked_user_name NVARCHAR(200) COLLATE DATABASE_DEFAULT NULL
+  booked_user_id INT NULL, booked_user_name NVARCHAR(200) COLLATE DATABASE_DEFAULT NULL,
+  owner NVARCHAR(MAX) COLLATE DATABASE_DEFAULT NULL  -- user(s) on the tenant's own booking party
 );
 INSERT INTO #prov (booking_cost_id, booking_id, amount, currency, concepto, vendor_name,
   vendor_directory_id, shipment_ref, responsible_country_id, st_estatus, estado)
@@ -211,11 +217,35 @@ BEGIN
   EXEC sys.sp_executesql @u, N'@p_tenant INT', @p_tenant = @cd_identityTenant;
 END
 
+/* ---- (F2) Provision OWNER: user(s) on the tenant's OWN booking party
+ *           (TESch_BookingPartesInvolucradasUsuarios where the booking party's
+ *            cd_identityDirectorio = the tenant's directory). Worker parity:
+ *            factura.extraida.usuarios.helper.ts (it filters role 'Operations
+ *            Executive'; here we show all assigned users WITH their role). ---- */
+UPDATE p SET p.owner = o.owners
+FROM #prov p
+OUTER APPLY (
+  SELECT STRING_AGG(
+           CONCAT(LTRIM(RTRIM(u.nb_nombre)),
+                  CASE WHEN NULLIF(LTRIM(RTRIM(bpiu.tx_descripcionRolUsuario)), '') IS NOT NULL
+                       THEN N' [' + LTRIM(RTRIM(bpiu.tx_descripcionRolUsuario)) + N']' ELSE N'' END),
+           N'; ') AS owners
+  FROM dbo.TESch_BookingPartesInvolucradas bpi WITH (NOLOCK)
+  INNER JOIN dbo.TESch_BookingPartesInvolucradasUsuarios bpiu WITH (NOLOCK)
+    ON bpiu.cd_IdentityBookingPartesInvolucradas = bpi.cd_identityBookingPartesInvolucradas
+  LEFT JOIN dbo.TCSch_Usuario u ON u.cd_identityUsuario = bpiu.cd_identityUsuario
+  WHERE bpi.cd_identityBooking = p.booking_id
+    AND bpi.cd_identityDirectorio = @tenantDirectorio
+    AND bpiu.cd_identityUsuario IS NOT NULL
+) o
+WHERE p.booking_id IS NOT NULL;
+
 /* ---- (G) Build the text report ---- */
 -- header
 SET @report =
   N'=== FACTURA EXTRAÍDA #' + CAST(@cd_identityFacturaExtraida AS NVARCHAR(20))
-  + N' (tenant ' + CAST(@cd_identityTenant AS NVARCHAR(20)) + N') ===' + @nl
+  + N' (tenant ' + CAST(@cd_identityTenant AS NVARCHAR(20))
+  + N', directorio ' + ISNULL(CAST(@tenantDirectorio AS NVARCHAR(20)),'?') + N') ===' + @nl
   + N'Document:   ' + ISNULL(@docName,'(none)') + @nl
   + N'Invoice no: ' + ISNULL(@invNo,'(none)')
   + N'   Issued: ' + ISNULL(CONVERT(NVARCHAR(10), @invDate, 23), '(none)') + @nl
@@ -271,6 +301,8 @@ SELECT @provText = STRING_AGG(line, @nl) WITHIN GROUP (ORDER BY booking_cost_id)
         ', booking ', ISNULL(CAST(booking_id AS NVARCHAR(20)),'?'),
         ', shipment ', ISNULL(shipment_ref,'?'),
         ', vendor "', ISNULL(vendor_name,'?'), '"') END,
+      CASE WHEN booking_id IS NOT NULL
+        THEN CONCAT(@nl, '       owner: ', ISNULL(owner,'(no user on tenant party)')) ELSE '' END,
       CASE WHEN estado='booked' AND booked_factura IS NOT NULL
         THEN CONCAT(@nl, '       -> BOOKED to legacy invoice cd_identityFactura ',
                     CAST(booked_factura AS NVARCHAR(20)), ' (nu_factura ', ISNULL(booked_nu,'?'), ')',
@@ -286,6 +318,56 @@ SET @report += @nl + N'--- PROVISION / CONTABILIZADA STATE ---' + @nl
   + N'  ESTADO: ' + @overall + @nl
   + ISNULL(@provText, N'  (no provision rows)') + @nl;
 
-SELECT @report AS report;
+/* ---- (H) All BookingCosto rows for resolved bookings (sanity-check: are provisions even there?) ---- */
+DECLARE @allProvText NVARCHAR(MAX), @allProvCount INT = 0;
+
+IF (SELECT COUNT(DISTINCT cd_identityBooking) FROM #bk) > 0
+BEGIN
+  SELECT @allProvCount = COUNT(*)
+  FROM dbo.TESch_BookingCosto bc WITH (NOLOCK)
+  WHERE bc.cd_identityBooking IN (SELECT DISTINCT cd_identityBooking FROM #bk)
+    AND bc.cd_identityTenant = @cd_identityTenant;
+
+  SELECT @allProvText = STRING_AGG(line, @nl) WITHIN GROUP (ORDER BY bc_id)
+  FROM (
+    SELECT
+      bc.cd_identityBookingCosto AS bc_id,
+      CONCAT(
+        '  bc#', CAST(bc.cd_identityBookingCosto AS NVARCHAR(20)),
+        '  bk#', CAST(bc.cd_identityBooking AS NVARCHAR(20)),
+        '  ', ISNULL(CONVERT(NVARCHAR(20), bc.im_importe),'?'), ' ', ISNULL(bc.tx_acronimoMoneda,''),
+        '  concepto: "', ISNULL(COALESCE(NULLIF(LTRIM(RTRIM(cf.nb_conceptoFactura)),''), bc.tx_conceptoCosto),'?'), '"',
+        '  vendor: "', ISNULL(dir.nb_nombreDirectorio,'?'), '"',
+        '  pais: ', ISNULL(CAST(bc.cd_identityPaisResponsable AS NVARCHAR(10)),'?'),
+        '  fec_linked: ', ISNULL(
+          (SELECT TOP 1 CONCAT(
+            CASE WHEN fec2.st_estatus=1 THEN 'BOOKED' WHEN fec2.st_estatus=0 THEN 'MATCHED' ELSE 'st='+CAST(fec2.st_estatus AS NVARCHAR(5)) END,
+            ' to fe#', CAST(fec2.cd_identityFacturaExtraida AS NVARCHAR(20)),
+            CASE WHEN fec2.cd_identityFacturaExtraida = @cd_identityFacturaExtraida THEN ' <-- THIS INVOICE' ELSE '' END)
+           FROM dbo.TESch_FacturaExtraidaContabilizada fec2 WITH (NOLOCK)
+           WHERE fec2.cd_identityBookingCosto = bc.cd_identityBookingCosto
+           ORDER BY fec2.st_estatus DESC),
+          'free (no contabilizada row)')
+      ) AS line
+    FROM dbo.TESch_BookingCosto bc WITH (NOLOCK)
+    LEFT JOIN dbo.TCSch_ConceptoFactura cf
+      ON cf.cd_identityConceptoFactura = bc.cd_identityConceptoFactura AND cf.cd_identityTenant = @cd_identityTenant
+    LEFT JOIN dbo.TCSch_Directorio dir ON dir.cd_identityDirectorio = bc.cd_identityDirectorio
+    WHERE bc.cd_identityBooking IN (SELECT DISTINCT cd_identityBooking FROM #bk)
+      AND bc.cd_identityTenant = @cd_identityTenant
+  ) x;
+END
+
+SET @report += @nl + N'--- ALL BOOKINGCOSTO ROWS FOR RESOLVED BOOKING(S) ---' + @nl
+  + N'  ' + CAST(@allProvCount AS NVARCHAR(10)) + N' provision(s) exist on the booking(s)' + @nl
+  + ISNULL(@allProvText, N'  (no bookings resolved — nothing to look up)') + @nl;
+
+/* ---- Print to Messages tab in 4 000-char chunks (PRINT/NVARCHAR limit) ---- */
+DECLARE @_pos INT = 1, @_len INT = LEN(@report);
+WHILE @_pos <= @_len
+BEGIN
+  PRINT SUBSTRING(@report, @_pos, 4000);
+  SET @_pos += 4000;
+END
 
 DROP TABLE #sig; DROP TABLE #bk; DROP TABLE #prov;
