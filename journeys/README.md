@@ -13,7 +13,7 @@ Next.js frontend for **Logic Journeys** (TMS workflows, tasks, supplier invoices
 ## Context
 
 - **Branch:** `main`
-- **Commit:** `25376b6` (2026-06-04)
+- **Commit:** `f7e50a4` (2026-06-24) — PR #70 merge, feature/backend
 
 ## Pull / refresh context
 
